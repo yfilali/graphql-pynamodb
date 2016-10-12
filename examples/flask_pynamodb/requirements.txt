@@ -1,0 +1,4 @@
+graphene[pynamodb]
+pynamodb==1.5.3
+Flask==0.11.1
+Flask-GraphQL==1.3.0
