@@ -3,53 +3,64 @@ to learn how to upgrade to Graphene `1.0`.
 
 ---
 
-# ![Graphene Logo](http://graphene-python.org/favicon.png) Graphene-SQLAlchemy [![Build Status](https://travis-ci.org/graphql-python/graphene-sqlalchemy.svg?branch=master)](https://travis-ci.org/graphql-python/graphene-sqlalchemy) [![PyPI version](https://badge.fury.io/py/graphene-sqlalchemy.svg)](https://badge.fury.io/py/graphene-sqlalchemy) [![Coverage Status](https://coveralls.io/repos/graphql-python/graphene-sqlalchemy/badge.svg?branch=master&service=github)](https://coveralls.io/github/graphql-python/graphene-sqlalchemy?branch=master)
+# ![Graphene Logo](http://graphene-python.org/favicon.png) Graphene-PynamoDB [![Build Status](https://travis-ci.org/yfilali/graphql-pynamodb.svg?branch=master)](https://travis-ci.org/yfilali/graphql-pynamodb) [![Coverage Status](https://coveralls.io/repos/github/yfilali/graphql-pynamodb/badge.svg?branch=master)](https://coveralls.io/github/yfilali/graphql-pynamodb?branch=master)
 
 
-A [SQLAlchemy](http://www.sqlalchemy.org/) integration for [Graphene](http://graphene-python.org/).
+A [PynamoDB](http://pynamodb.readthedocs.io/) integration for [Graphene](http://graphene-python.org/).
 
 ## Installation
 
 For instaling graphene, just run this command in your shell
 
 ```bash
-pip install "graphene-sqlalchemy>=1.0"
+pip install git+git://github.com/yfilali/graphql-pynamodb
 ```
 
 ## Examples
 
-Here is a simple SQLAlchemy model:
+Here is a simple PynamoDB model:
 
 ```python
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import backref, relationship
+from uuid import uuid4
+from pynamodb.attributes import UnicodeAttribute
+from pynamodb.models import Model
 
-from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+class User(Model):
+    class Meta:
+        table_name = "my_users"
+        host = "http://localhost:8000"
 
-class UserModel(Base):
-    __tablename__ = 'department'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    last_name = Column(String)
+    id = UnicodeAttribute(hash_key=True)
+    name = UnicodeAttribute(null=False)
+
+
+if not User.exists():
+    User.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
+    User(id=str(uuid4()), name="John Snow").save()
+    User(id=str(uuid4()), name="Daenerys Targaryen").save()
+
 ```
 
 To create a GraphQL schema for it you simply have to write the following:
 
 ```python
-from graphene_sqlalchemy import SQLAlchemyObjectType
+import graphene
+from graphene_pynamodb import PynamoObjectType
 
-class User(SQLAlchemyObjectType):
+
+class UserNode(PynamoObjectType):
     class Meta:
-        model = UserModel
+        model = User
+        interfaces = (graphene.Node,)
+
 
 class Query(graphene.ObjectType):
-    users = graphene.List(User)
+    users = graphene.List(UserNode)
 
     def resolve_users(self, args, context, info):
-        query = User.get_query(context) # SQLAlchemy query
-        return query.all()
+        return User.scan()
+
 
 schema = graphene.Schema(query=Query)
 ```
@@ -60,17 +71,16 @@ Then you can simply query the schema:
 query = '''
     query {
       users {
-        name,
-        lastName
+        name
       }
     }
 '''
-result = schema.execute(query, context_value={'session': db_session})
+result = schema.execute(query)
 ```
 
 To learn more check out the following [examples](examples/):
 
-* **Full example**: [Flask SQLAlchemy example](examples/flask_sqlalchemy)
+* **Full example**: [Flask PynamoDB example](examples/flask_pynamodb)
 
 
 ## Contributing
