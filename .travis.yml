@@ -32,10 +32,10 @@ script:
 - |
   if [ "$TEST_TYPE" = lint ]; then
     echo "Checking Python code lint."
-    flake8 graphene_sqlalchemy
+    flake8 graphene_pynamodb
     exit
   elif [ "$TEST_TYPE" = build ]; then
-    py.test --cov=graphene_sqlalchemy graphene_sqlalchemy examples
+    py.test --cov=graphene_pynamodb graphene_pynamodb examples
   fi
 after_success:
 - |
