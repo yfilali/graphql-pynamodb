@@ -34,7 +34,7 @@ def test_should_query_well():
         reporters = graphene.List(ReporterType)
 
         def resolve_reporter(self, *args, **kwargs):
-            return Reporter.query(1).next()
+            return next(Reporter.query(1))
 
         def resolve_reporters(self, *args, **kwargs):
             return Reporter.scan()
