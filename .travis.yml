@@ -6,19 +6,19 @@ python:
 - 3.5
 - pypy
 before_install:
-  - |
-      if [ "$TRAVIS_PYTHON_VERSION" = "pypy" ]; then
-        export PYENV_ROOT="$HOME/.pyenv"
-        if [ -f "$PYENV_ROOT/bin/pyenv" ]; then
-          cd "$PYENV_ROOT" && git pull
-        else
-          rm -rf "$PYENV_ROOT" && git clone --depth 1 https://github.com/yyuu/pyenv.git "$PYENV_ROOT"
-        fi
-        export PYPY_VERSION="4.0.1"
-        "$PYENV_ROOT/bin/pyenv" install "pypy-$PYPY_VERSION"
-        virtualenv --python="$PYENV_ROOT/versions/pypy-$PYPY_VERSION/bin/python" "$HOME/virtualenvs/pypy-$PYPY_VERSION"
-        source "$HOME/virtualenvs/pypy-$PYPY_VERSION/bin/activate"
-      fi
+- |
+  if [ "$TRAVIS_PYTHON_VERSION" = "pypy" ]; then
+    export PYENV_ROOT="$HOME/.pyenv"
+    if [ -f "$PYENV_ROOT/bin/pyenv" ]; then
+      cd "$PYENV_ROOT" && git pull
+    else
+      rm -rf "$PYENV_ROOT" && git clone --depth 1 https://github.com/yyuu/pyenv.git "$PYENV_ROOT"
+    fi
+    export PYPY_VERSION="4.0.1"
+    "$PYENV_ROOT/bin/pyenv" install "pypy-$PYPY_VERSION"
+    virtualenv --python="$PYENV_ROOT/versions/pypy-$PYPY_VERSION/bin/python" "$HOME/virtualenvs/pypy-$PYPY_VERSION"
+    source "$HOME/virtualenvs/pypy-$PYPY_VERSION/bin/activate"
+  fi
 install:
 - |
   if [ "$TEST_TYPE" = build ]; then
@@ -45,6 +45,10 @@ after_success:
 env:
   matrix:
   - TEST_TYPE=build
+  global:
+  - secure: ii5Alv4ZVaSLc+Zl7S+P+6gGJyLEd3WhHazKyDtNDpACTDuK9pyjoWevdXO4WpJ8qkDmPAcHWCXpTlsItt/1dRUceOAyjLzhkzXgVbo8+zAX4gaTvJBu2oSVHUjKumqIK0NK5zbdJjAkYGK840WuKLbgAoGSVHD9h3X9oeaKl5uM8SXfJ2umhnzVC9FETJeQ2j9IBVk0lDTKxT7BXI605NCM1X7ZqqY/K6fd/XKX1NMECBoc6/yVEowDO3+mBTqlQ1oC0Hl6QDEHhGZLCIVX+lVpR+YlY8uGzrb6NBbdlt9QeoMefV5Ab9IqTfRVV7KIvabzJVnw1LsY9xQ4Oct7QXxhv7pPxByoj/kLLySs4Fqm1Y7DP1X90bf7A0WSxc/wPQRi7+7DkIKcGNXyZM258DSHAxuaHzJumHFAaLNOsaUrj3DuIuliWKEAS58Vx7025YHpKmiclq9eWIMaiZd4XRwVs7tVw8GJksAoITJyRJFvQvSdRPh38HCKAz2cGafe8oTPepTL1sHqs9UEf5BlMUiEj9YN+fJXYbbc8+aNWjGVI7qWxxnOJZ9ys3btkMHPp2hvegswqGO4o9NGdJrYHZW2lUYAZ7Werow9GxziT6cLZFc2RdlqyhNPWuaJjxM+ZK0yKoCFCUxBCU7KE8WDUVfXees5Wl/7IYKsG2hQMUw=
+  - secure: MsT9Xg8HSywDY2MnmJl4SBfh2xjBgiz6P6SGfZJKnzzcV8PIHy/eiznJZBfqxRuL09u2Gs3f4v2xKs4MyOK6xQH5l87UrWuoif+eiXrV8Wc0VBfewNSv2owz3sA58eYDJmK3hfsApxZvJU28nLHkYjVJEnmTIhzNdNic8BFXvfdIAQymu4OfWmfLumDu83aDRWHLha8/Y/tpgGWhOf+2cIIOX5LWuhjn82MRo/iQ8KgFfOlkQWn8LbOBK0qvBj5Is5lp+2hKaYeV7BJ+/sxavTuQVyW3TnEoj9h5ysMbgriz7qto4J0exxl88gLPRACN8Kw5uc2wLLn+qeYKffAgFI1d0uWOAEqLNku/ASS5cfHt6Jc5P8CZX51+he+bhi7V7UZWZ2M8dU/JJ4tsGaEiUaPkXiMqZMOKPh3g081ZPx75zlYul38f9kv9FoLGT4PhluWM5cnzavCP8kRV+4lwaT5ySgaNsJK0Nvx8wFJKDaqpcS1CgJ0CPZoBLdjNbbsXjuScp1yuhkfeDoxgmUV4bA4aGUhTbA0H/RNd7KzH3WGjCDpROfAQPjIBGEPVn1yyG3Adp8TtDMlYz390+eKnbiISkx8XE9zNWpzk+JkZDUGlC4IVZV1XTT32tGqmOodXLmLsmY+XwSUL/YTAVleCLVvPzh9I45tqbxBYQkH7XD0=
+  - secure: SdqRiLn+4kel5tNJkVO2623ehVuD2AiUIfCNpZOYHq9VRQYuhoxHV4JFX4xxRq0F+MuUQpg68HrY2IHboLx2B3zai+HOqBKM3/EZmG5GFmFz8MhMaYnZOGxAU3I8ThceG7w08MgPrwGvreLSZs9QJyc5kAIlEZhMWVuEcPCLHGPsNmaAQz/XfmMqqRR/LHdO1lWyQOm2X3vkgGLEdiGPtLg+SAAXkZP7L7rkMFbV8c3716I3Hw8AfuUJMoWLQC8PD9k7d3jY/veZdWTIC5Ib745b+OBPZnuqakSmKP3kuRIT/dkKAwJMgiUHs5HYir5oDdTLaHjDjpw7f6xztKb28oOQiymoLqv0LjTnVhGHSFYysoy6PVlAVSm9H38RMY9XpuCErDBP559DTCT44ngTZaM3ao7SlaCpWHo5FJvX3nG0oEipy2hmyGuepVlLDZUXl6R3R+qq+GRb7BDM7xquSQLxwmu5Tk+F0k7HdelRuK1UGGXQFMCWbvCF6tEL4b2pZO/rijjx4ak/lNEUDZNw5rqcQFSBAraSRoxLATPtv/0dzanbxPkm4fbHtKQJMn1sBLWNBGLNXd5yk8+XAGxTfAQAxpEWNERvVHNIOCcBRw/o6LWJz9XyhogRrbKb0WVryVpHxgkteglNfQ4QU1KQAV40aL2s0aT2m6pou4eMlAE=
 matrix:
   fast_finish: true
   include:
