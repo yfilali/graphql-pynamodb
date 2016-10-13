@@ -1,28 +1,14 @@
+from graphene import Dynamic
+from graphene import Field
 from graphene import ID, Boolean, Int, List, String
+from graphene import is_node
 from graphene.types.json import JSONString
 from pynamodb import attributes
 from singledispatch import singledispatch
 
-
-def convert_relationship(relationship, registry):
-    raise Exception(
-        "PynamoDB doesn't support relationships out of the box yet %s (%s)" % (relationship, registry))
-    # direction = relationship.direction
-    # model = relationship.mapper.entity
-    #
-    # def dynamic_type():
-    #     _type = registry.get_type_for_model(model)
-    #     if not _type:
-    #         return None
-    #     if (direction == interfaces.MANYTOONE or not relationship.uselist):
-    #         return Field(_type)
-    #     elif (direction == interfaces.ONETOMANY or
-    #                   direction == interfaces.MANYTOMANY):
-    #         if is_node(_type):
-    #             return PynamoConnectionField(_type)
-    #         return Field(List(_type))
-    #
-    # return Dynamic(dynamic_type)
+from graphene_pynamodb import relationships
+from graphene_pynamodb.fields import PynamoConnectionField
+from graphene_pynamodb.relationships import OneToOne, OneToMany
 
 
 def convert_pynamo_composite(composite, registry):
@@ -66,6 +52,26 @@ def convert_pynamo_attribute(type, attribute, registry=None):
 def convert_column_to_string(type, attribute, registry=None):
     return String(description=getattr(attribute, 'attr_name'),
                   required=not (getattr(attribute, 'null', True)))
+
+
+@convert_pynamo_attribute.register(relationships.Relationship)
+def convert_relationship_to_dynamic(type, attribute, registry=None):
+    def dynamic_type():
+        _type = registry.get_type_for_model(attribute.model)
+        if not _type:
+            return None
+
+        if isinstance(attribute, OneToOne):
+            return Field(_type)
+
+        if isinstance(attribute, OneToMany):
+            if is_node(_type):
+                return PynamoConnectionField(_type)
+            return Field(List(_type))
+
+        return None
+
+    return Dynamic(dynamic_type)
 
 
 @convert_pynamo_attribute.register(attributes.NumberAttribute)

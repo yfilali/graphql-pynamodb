@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from graphene_pynamodb.relationships import OneToOne
 from pynamodb.attributes import UnicodeAttribute, UTCDateTimeAttribute
 from pynamodb.models import Model
 
@@ -30,5 +31,5 @@ class Employee(Model):
     id = UnicodeAttribute(hash_key=True)
     name = UnicodeAttribute()
     hired_on = UTCDateTimeAttribute(default=datetime.now)
-    department_id = UnicodeAttribute(null=False)
-    role_id = UnicodeAttribute(null=False)
+    department = OneToOne(Department)
+    role = OneToOne(Role)

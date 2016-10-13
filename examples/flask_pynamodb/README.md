@@ -53,3 +53,26 @@ Now the following command will setup the database, and start the server:
 Now head on over to
 [http://127.0.0.1:5000/graphql](http://127.0.0.1:5000/graphql)
 and run some queries!
+
+Here is one to get you started:
+```
+{
+  allEmployees {
+    edges {
+      node {
+        id
+        name
+        department {
+          id
+          name
+        }
+        role {
+          name
+        }
+        hiredOn
+      }
+    }
+  }
+}
+
+```

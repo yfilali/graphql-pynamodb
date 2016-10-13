@@ -16,8 +16,11 @@ def setup_fixtures():
     if not Article.exists():
         Article.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
         article = Article(id=1, headline='Hi!')
-        article.reporter_id = 1
+        article.reporter = reporter
         article.save()
+        article2 = Article(id=3, headline='My Article')
+        article2.reporter = reporter
+        article2.save()
     if not Editor.exists():
         Editor.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
         editor = Editor(editor_id=1, name="John")
@@ -110,7 +113,13 @@ def test_should_node():
           reporter {
             id,
             firstName,
-            articles
+            articles {
+              edges {
+                node {
+                  headline
+                }
+              }
+            }
             lastName,
             email
           }
@@ -138,7 +147,20 @@ def test_should_node():
             'firstName': 'ABA',
             'lastName': 'X',
             'email': None,
-            'articles': None
+            'articles': {
+                'edges': [
+                    {
+                        'node': {
+                            'headline': 'Hi!'
+                        }
+                    },
+                    {
+                        'node': {
+                            'headline': 'My Article'
+                        }
+                    }
+                ]
+            }
         },
         'allArticles': {
             'edges': [{
@@ -155,7 +177,8 @@ def test_should_node():
     schema = graphene.Schema(query=Query)
     result = schema.execute(query)
     assert not result.errors
-    assert result.data["reporter"] == expected["reporter"]
+    assert all(item in expected["reporter"] for item in result.data["reporter"])
+    assert all(item in expected["reporter"]["articles"] for item in result.data["reporter"]["articles"])
     assert result.data["myArticle"] == expected["myArticle"]
     assert all(item in result.data["allArticles"] for item in expected['allArticles'])
 

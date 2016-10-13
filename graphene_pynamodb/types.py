@@ -8,11 +8,11 @@ from graphene.types.objecttype import ObjectType, ObjectTypeMeta
 from graphene.types.options import Options
 from graphene.types.utils import merge, yank_fields_from_attrs
 from graphene.utils.is_base_type import is_base_type
-from graphene_pynamodb.converter import convert_pynamo_attribute
 from pynamodb.attributes import Attribute, NumberAttribute
 from pynamodb.exceptions import DoesNotExist
 from pynamodb.models import Model
 
+from graphene_pynamodb.converter import convert_pynamo_attribute
 from .registry import Registry, get_global_registry
 from .utils import get_query
 
@@ -79,7 +79,6 @@ def construct_fields(options):
 
 
 class PynamoObjectTypeMeta(ObjectTypeMeta):
-
     @staticmethod
     def __new__(cls, name, bases, attrs):
         # Also ensure initialization is only performed for subclasses of Model
@@ -131,7 +130,6 @@ class PynamoObjectTypeMeta(ObjectTypeMeta):
 
 
 class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
-
     @classmethod
     def is_type_of(cls, root, context, info):
         if isinstance(root, cls):

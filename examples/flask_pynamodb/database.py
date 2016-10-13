@@ -23,11 +23,11 @@ def init_db():
     engineer = Role(id=str(uuid4()), name='engineer')
     engineer.save()
 
-    peter = Employee(id=str(uuid4()), name='Peter', department_id=engineering.id, role_id=engineer.id)
+    peter = Employee(id=str(uuid4()), name='Peter', department=engineering, role=engineer)
     peter.save()
 
-    roy = Employee(id=str(uuid4()), name='Roy', department_id=engineering.id, role_id=engineer.id)
+    roy = Employee(id=str(uuid4()), name='Roy', department=engineering, role=engineer)
     roy.save()
 
-    tracy = Employee(id=str(uuid4()), name='Tracy', department_id=hr.id, role_id=manager.id)
+    tracy = Employee(id=str(uuid4()), name='Tracy', department=hr, role=manager)
     tracy.save()
