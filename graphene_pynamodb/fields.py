@@ -9,7 +9,6 @@ from graphql_relay.connection.arrayconnection import connection_from_list_slice
 
 
 class PynamoConnectionField(ConnectionField):
-
     @property
     def model(self):
         return self.type._meta.node._meta.model
@@ -25,8 +24,8 @@ class PynamoConnectionField(ConnectionField):
         if iterable is None:
             iterable = cls.get_query(model, context, info, args)
         if isinstance(iterable, types.GeneratorType):
-            _len = model.count()
             iterable = list(iterable)
+            _len = len(iterable)
         else:
             _len = len(iterable)
         return connection_from_list_slice(

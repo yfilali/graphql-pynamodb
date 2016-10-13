@@ -38,6 +38,7 @@ pip install -r requirements.txt
 ```
 
 **IMPORTANT**
+
 The example assumes a local dynamodb database. [You can get it here](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html)
 Alternatively, you can run against aws dynamodb by setting your aws credentials using 'aws configure'  
 
