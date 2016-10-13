@@ -98,10 +98,10 @@ def test_should_node():
         all_articles = PynamoConnectionField(ArticleNode)
 
         def resolve_reporter(self, *args, **kwargs):
-            return Reporter.query(1).next()
+            return next(Reporter.query(1))
 
         def resolve_article(self, *args, **kwargs):
-            return Article.query(1).next()
+            return next(Article.query(1))
 
     query = '''
         query ReporterQuery {
