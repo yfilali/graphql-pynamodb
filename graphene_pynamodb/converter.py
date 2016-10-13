@@ -6,8 +6,7 @@ from singledispatch import singledispatch
 
 def convert_relationship(relationship, registry):
     raise Exception(
-        "PynamoDB doesn't support relationships out of the box yet %s (%s)" %
-        (composite, composite.composite_class))
+        "PynamoDB doesn't support relationships out of the box yet %s (%s)" % (relationship, registry))
     # direction = relationship.direction
     # model = relationship.mapper.entity
     #
