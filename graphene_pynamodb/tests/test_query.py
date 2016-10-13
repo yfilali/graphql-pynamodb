@@ -14,10 +14,12 @@ def setup_fixtures():
         reporter2 = Reporter(id=2, first_name='ABO', last_name='Y')
         reporter2.save()
     if not Article.exists():
+        Article.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
         article = Article(id=1, headline='Hi!')
         article.reporter_id = 1
         article.save()
     if not Editor.exists():
+        Editor.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
         editor = Editor(editor_id=1, name="John")
         editor.save()
 
