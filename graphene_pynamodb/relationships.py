@@ -1,6 +1,7 @@
 from pynamodb.attributes import Attribute, NumberAttribute
 from pynamodb.constants import STRING, STRING_SET
 from pynamodb.models import Model
+from six import string_types
 
 
 class Relationship(Attribute):
@@ -17,7 +18,7 @@ class Relationship(Attribute):
         return next((model for model in Relationship._models if model.__name__ == model_name), None)
 
     def __init__(self, model, hash_key="id", **args):
-        if not isinstance(model, (str, unicode)) and not issubclass(model, Model):
+        if not isinstance(model, string_types) and not issubclass(model, Model):
             raise TypeError("Expected PynamoDB Model argument, got: %s " % model.__class__.__name__)
 
         Attribute.__init__(self, **args)
@@ -26,8 +27,8 @@ class Relationship(Attribute):
 
     @property
     def model(self):
-        if isinstance(self._model, (str, unicode)):
-            return Relationship.get_model(self._model)
+        if isinstance(self._model, string_types):
+            self._model = Relationship.get_model(self._model)
 
         return self._model
 
