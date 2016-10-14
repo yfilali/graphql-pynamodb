@@ -5,12 +5,18 @@ from pynamodb.models import Model
 
 class Relationship(Attribute):
     def __init__(self, model, hash_key="id", **args):
-        if not issubclass(model, Model):
+        if not isinstance(model, type(lambda: 0)) and not issubclass(model, Model):
             raise TypeError("Expected PynamoDB Model argument, got: %s " % model.__class__.__name__)
 
         Attribute.__init__(self, **args)
-        self.model = model
+        self._model = model
         self.hash_key = hash_key
+
+    @property
+    def model(self):
+        if isinstance(self._model, type(lambda: 0)):
+            return self._model()
+        return self._model
 
 
 class OneToOne(Relationship):
