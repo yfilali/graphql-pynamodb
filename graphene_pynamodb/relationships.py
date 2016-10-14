@@ -4,8 +4,20 @@ from pynamodb.models import Model
 
 
 class Relationship(Attribute):
+    _models = None
+
+    @classmethod
+    def sub_classes(cls, klass):
+        return klass.__subclasses__() + [g for s in klass.__subclasses__() for g in Relationship.sub_classes(s)]
+
+    @classmethod
+    def get_model(cls, model_name):
+        if not Relationship._models:
+            Relationship._models = Relationship.sub_classes(Model)
+        return next((model for model in Relationship._models if model.__name__ == model_name), None)
+
     def __init__(self, model, hash_key="id", **args):
-        if not isinstance(model, type(lambda: 0)) and not issubclass(model, Model):
+        if not isinstance(model, (str, unicode)) and not issubclass(model, Model):
             raise TypeError("Expected PynamoDB Model argument, got: %s " % model.__class__.__name__)
 
         Attribute.__init__(self, **args)
@@ -14,8 +26,9 @@ class Relationship(Attribute):
 
     @property
     def model(self):
-        if isinstance(self._model, type(lambda: 0)):
-            return self._model()
+        if isinstance(self._model, (str, unicode)):
+            return Relationship.get_model(self._model)
+
         return self._model
 
 
@@ -39,10 +52,10 @@ class OneToMany(Relationship):
     attr_type = STRING_SET
 
     def serialize(self, models):
-        return [getattr(model, self.key_name) for model in models]
+        return [getattr(model, self.hash_key) for model in models]
 
     def deserialize(self, hash_keys):
-        if isinstance(getattr(self.model, self.key_name), NumberAttribute):
+        if isinstance(getattr(self.model, self.hash_key), NumberAttribute):
             hash_keys = map(int, hash_keys)
 
         try:
