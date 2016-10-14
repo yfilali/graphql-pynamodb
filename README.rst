@@ -4,10 +4,10 @@ to learn how to upgrade to Graphene ``1.0``.
 
 --------------
 
-|Graphene Logo| Graphene-SQLAlchemy |Build Status| |PyPI version| |Coverage Status|
-===================================================================================
+|Graphene Logo| Graphene-PynamoDB |Build Status| |Coverage Status|
+==================================================================
 
-A `SQLAlchemy <http://www.sqlalchemy.org/>`__ integration for
+A `PynamoDB <http://pynamodb.readthedocs.io/>`__ integration for
 `Graphene <http://graphene-python.org/>`__.
 
 Installation
@@ -17,45 +17,55 @@ For instaling graphene, just run this command in your shell
 
 .. code:: bash
 
-    pip install "graphene-sqlalchemy>=1.0"
+    pip install git+git://github.com/yfilali/graphql-pynamodb
 
 Examples
 --------
 
-Here is a simple SQLAlchemy model:
+Here is a simple PynamoDB model:
 
 .. code:: python
 
-    from sqlalchemy import Column, Integer, String
-    from sqlalchemy.orm import backref, relationship
+    from uuid import uuid4
+    from pynamodb.attributes import UnicodeAttribute
+    from pynamodb.models import Model
 
-    from sqlalchemy.ext.declarative import declarative_base
 
-    Base = declarative_base()
+    class User(Model):
+        class Meta:
+            table_name = "my_users"
+            host = "http://localhost:8000"
 
-    class UserModel(Base):
-        __tablename__ = 'department'
-        id = Column(Integer, primary_key=True)
-        name = Column(String)
-        last_name = Column(String)
+        id = UnicodeAttribute(hash_key=True)
+        name = UnicodeAttribute(null=False)
+
+
+    if not User.exists():
+        User.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
+        User(id=str(uuid4()), name="John Snow").save()
+        User(id=str(uuid4()), name="Daenerys Targaryen").save()
 
 To create a GraphQL schema for it you simply have to write the
 following:
 
 .. code:: python
 
-    from graphene_sqlalchemy import SQLAlchemyObjectType
+    import graphene
+    from graphene_pynamodb import PynamoObjectType
 
-    class User(SQLAlchemyObjectType):
+
+    class UserNode(PynamoObjectType):
         class Meta:
-            model = UserModel
+            model = User
+            interfaces = (graphene.Node,)
+
 
     class Query(graphene.ObjectType):
-        users = graphene.List(User)
+        users = graphene.List(UserNode)
 
         def resolve_users(self, args, context, info):
-            query = User.get_query(context) # SQLAlchemy query
-            return query.all()
+            return User.scan()
+
 
     schema = graphene.Schema(query=Query)
 
@@ -66,17 +76,16 @@ Then you can simply query the schema:
     query = '''
         query {
           users {
-            name,
-            lastName
+            name
           }
         }
     '''
-    result = schema.execute(query, context_value={'session': db_session})
+    result = schema.execute(query)
 
 To learn more check out the following `examples <examples/>`__:
 
--  **Full example**: `Flask SQLAlchemy
-   example <examples/flask_sqlalchemy>`__
+-  **Full example**: `Flask PynamoDB
+   example <examples/flask_pynamodb>`__
 
 Contributing
 ------------
@@ -94,9 +103,7 @@ After developing, the full test suite can be evaluated by running:
     python setup.py test # Use --pytest-args="-v -s" for verbose mode
 
 .. |Graphene Logo| image:: http://graphene-python.org/favicon.png
-.. |Build Status| image:: https://travis-ci.org/graphql-python/graphene-sqlalchemy.svg?branch=master
-   :target: https://travis-ci.org/graphql-python/graphene-sqlalchemy
-.. |PyPI version| image:: https://badge.fury.io/py/graphene-sqlalchemy.svg
-   :target: https://badge.fury.io/py/graphene-sqlalchemy
-.. |Coverage Status| image:: https://coveralls.io/repos/graphql-python/graphene-sqlalchemy/badge.svg?branch=master&service=github
-   :target: https://coveralls.io/github/graphql-python/graphene-sqlalchemy?branch=master
+.. |Build Status| image:: https://travis-ci.org/yfilali/graphql-pynamodb.svg?branch=master
+   :target: https://travis-ci.org/yfilali/graphql-pynamodb
+.. |Coverage Status| image:: https://coveralls.io/repos/github/yfilali/graphql-pynamodb/badge.svg?branch=master
+   :target: https://coveralls.io/github/yfilali/graphql-pynamodb?branch=master
