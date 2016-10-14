@@ -20,7 +20,7 @@ class OneToOne(Relationship):
         return getattr(model, self.hash_key)
 
     def deserialize(self, hash_key):
-        if isinstance(getattr(self.model, self.hash_key)):
+        if isinstance(getattr(self.model, self.hash_key), NumberAttribute):
             hash_key = int(hash_key)
 
         try:
