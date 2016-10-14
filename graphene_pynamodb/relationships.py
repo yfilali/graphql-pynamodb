@@ -4,26 +4,29 @@ from pynamodb.models import Model
 
 
 class Relationship(Attribute):
-    def __init__(self, model, key_name="id", **args):
+    def __init__(self, model, hash_key="id", **args):
         if not issubclass(model, Model):
             raise TypeError("Expected PynamoDB Model argument, got: %s " % model.__class__.__name__)
 
         Attribute.__init__(self, **args)
         self.model = model
-        self.key_name = key_name
+        self.hash_key = hash_key
 
 
 class OneToOne(Relationship):
     attr_type = STRING
 
-    def serialize(self, value):
-        return getattr(value, self.key_name)
+    def serialize(self, model):
+        return getattr(model, self.hash_key)
 
-    def deserialize(self, value):
-        if isinstance(getattr(self.model, self.key_name), NumberAttribute):
-            return self.model.get(int(value))
-        else:
-            return self.model.get(value)
+    def deserialize(self, hash_key):
+        if isinstance(getattr(self.model, self.hash_key)):
+            hash_key = int(hash_key)
+
+        try:
+            return self.model.get(hash_key)
+        except self.model.DoesNotExist:
+            return None
 
 
 class OneToMany(Relationship):
@@ -32,8 +35,11 @@ class OneToMany(Relationship):
     def serialize(self, models):
         return [getattr(model, self.key_name) for model in models]
 
-    def deserialize(self, values):
+    def deserialize(self, hash_keys):
         if isinstance(getattr(self.model, self.key_name), NumberAttribute):
-            return self.model.batch_get(map(int, values))
-        else:
-            return self.model.batch_get(values)
+            hash_keys = map(int, hash_keys)
+
+        try:
+            return self.model.batch_get(hash_keys)
+        except self.model.DoesNotExist:
+            return None
