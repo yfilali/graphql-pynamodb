@@ -27,7 +27,7 @@ setup(
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
 
-    keywords='api graphql protocol rest relay graphene',
+    keywords='api graphql protocol rest relay graphene pynamodb dynamodb',
 
     packages=find_packages(exclude=['tests']),
 
