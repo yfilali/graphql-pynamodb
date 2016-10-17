@@ -1,12 +1,13 @@
-SQLAlchemy + Flask Tutorial
-===========================
+PynamoDB + Flask Tutorial
+=========================
 
-Graphene comes with builtin support to SQLAlchemy, which makes quite
-easy to operate with your current models.
+To use graphene with pynamodb, you need to install the graphene-pynamodb from pypi:
+.. code:: bash
+pip install graphene-pynamodb
 
-Note: The code in this tutorial is pulled from the `Flask SQLAlchemy
+Note: The code in this tutorial is pulled from the `Flask PynamoDB
 example
-app <https://github.com/graphql-python/graphene-sqlalchemy/tree/master/examples/flask_sqlalchemy>`__.
+app <https://github.com/yfilali/graphql-pynamodb/tree/master/examples/flask_pynamodb>`__.
 
 Setup the Project
 -----------------
@@ -16,16 +17,15 @@ We will setup the project, execute the following:
 .. code:: bash
 
     # Create the project directory
-    mkdir flask_sqlalchemy
-    cd flask_sqlalchemy
+    mkdir flask_pynamodb
+    cd flask_pynamodb
 
     # Create a virtualenv to isolate our package dependencies locally
     virtualenv env
     source env/bin/activate  # On Windows use `env\Scripts\activate`
 
-    # SQLAlchemy and Graphene with SQLAlchemy support
-    pip install SQLAlchemy
-    pip install graphene_sqlalchemy
+    # Install graphene with pynamodb support
+    pip install graphene-pynamodb
 
     # Install Flask and GraphQL Flask for exposing the schema through HTTP
     pip install Flask
@@ -37,40 +37,40 @@ Defining our models
 Let's get started with these models:
 
 .. code:: python
-
-    # flask_sqlalchemy/models.py
-    from sqlalchemy import *
-    from sqlalchemy.orm import (scoped_session, sessionmaker, relationship,
-                                backref)
-    from sqlalchemy.ext.declarative import declarative_base
-
-    engine = create_engine('sqlite:///database.sqlite3', convert_unicode=True)
-    db_session = scoped_session(sessionmaker(autocommit=False,
-                                             autoflush=False,
-                                             bind=engine))
-
-    Base = declarative_base()
-    # We will need this for querying
-    Base.query = db_session.query_property()
+from datetime import datetime
+    from graphene_pynamodb.relationships import OneToOne
+    from pynamodb.attributes import UnicodeAttribute, UTCDateTimeAttribute
+    from pynamodb.models import Model
 
 
-    class Department(Base):
-        __tablename__ = 'department'
-        id = Column(Integer, primary_key=True)
-        name = Column(String)
+    class Department(Model):
+        class Meta:
+            table_name = 'flask_pynamodb_example_department'
+            host = "http://localhost:8000"
+
+        id = UnicodeAttribute(hash_key=True)
+        name = UnicodeAttribute()
 
 
-    class Employee(Base):
-        __tablename__ = 'employee'
-        id = Column(Integer, primary_key=True)
-        name = Column(String)
-        hired_on = Column(DateTime, default=func.now())
-        department_id = Column(Integer, ForeignKey('department.id'))
-        department = relationship(
-            Department,
-            backref=backref('employees',
-                            uselist=True,
-                            cascade='delete,all'))
+    class Role(Model):
+        class Meta:
+            table_name = 'flask_pynamodb_example_roles'
+            host = "http://localhost:8000"
+
+        id = UnicodeAttribute(hash_key=True)
+        name = UnicodeAttribute()
+
+
+    class Employee(Model):
+        class Meta:
+            table_name = 'flask_pynamodb_example_employee'
+            host = "http://localhost:8000"
+
+        id = UnicodeAttribute(hash_key=True)
+        name = UnicodeAttribute()
+        hired_on = UTCDateTimeAttribute(default=datetime.now)
+        department = OneToOne(Department)
+        role = OneToOne(Role)
 
 Schema
 ------
@@ -85,36 +85,47 @@ is the ``Query`` class below. In this example, we provide the ability to
 list all employees via ``all_employees``, and the ability to obtain a
 specific node via ``node``.
 
-Create ``flask_sqlalchemy/schema.py`` and type the following:
+Create ``flask_pynamodb/schema.py`` and type the following:
 
 .. code:: python
 
-    # flask_sqlalchemy/schema.py
+    # flask_pynamodb/schema.py
     import graphene
     from graphene import relay
-    from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
-    from models import db_session, Department as DepartmentModel, Employee as EmployeeModel
+    from graphene_pynamodb import PynamoConnectionField, PynamoObjectType
+    from models import Department as DepartmentModel
+    from models import Employee as EmployeeModel
+    from models import Role as RoleModel
 
-    schema = graphene.Schema()
 
-
-    class Department(SQLAlchemyObjectType):
+    class Department(PynamoObjectType):
         class Meta:
             model = DepartmentModel
-            interfaces = (relay.Node, )
+            interfaces = (relay.Node,)
 
 
-    class Employee(SQLAlchemyObjectType):
+    class Employee(PynamoObjectType):
         class Meta:
             model = EmployeeModel
-            interfaces = (relay.Node, )
+            interfaces = (relay.Node,)
+
+
+    class Role(PynamoObjectType):
+
+        class Meta:
+            model = RoleModel
+            interfaces = (relay.Node,)
 
 
     class Query(graphene.ObjectType):
         node = relay.Node.Field()
-        all_employees = SQLAlchemyConnectionField(Employee)
+        all_employees = PynamoConnectionField(Employee)
+        all_roles = PynamoConnectionField(Role)
+        role = graphene.Field(Role)
 
-    schema.query = Query
+
+    schema = graphene.Schema(query=Query, types=[Department, Employee, Role])
+
 
 Creating GraphQL and GraphiQL views in Flask
 --------------------------------------------
@@ -131,7 +142,7 @@ installed makes this task quite easy.
 
 .. code:: python
 
-    # flask_sqlalchemy/app.py
+    # flask_pynamodb/app.py
     from flask import Flask
     from flask_graphql import GraphQLView
 
@@ -143,16 +154,8 @@ installed makes this task quite easy.
 
     app.add_url_rule(
         '/graphql',
-        view_func=GraphQLView.as_view(
-            'graphql',
-            schema=schema,
-            graphiql=True # for having the GraphiQL interface
-        )
+        view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True)
     )
-
-    @app.teardown_appcontext
-    def shutdown_session(exception=None):
-        db_session.remove()
 
     if __name__ == '__main__':
         app.run()
@@ -160,26 +163,42 @@ installed makes this task quite easy.
 Creating some data
 ------------------
 
-.. code:: bash
+.. code:: python
 
+    # flask_pynamodb/database.py
+
+    def init_db():
+        from models import Department, Employee, Role
+        for model in [Department, Employee, Role]:
+            if model.exists():
+                model.delete_table()
+            model.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
+
+        # Create the fixtures
+        engineering = Department(id=str(uuid4()), name='Engineering')
+        engineering.save()
+        hr = Department(id=str(uuid4()), name='Human Resources')
+        hr.save()
+
+        manager = Role(id=str(uuid4()), name='manager')
+        manager.save()
+
+        engineer = Role(id=str(uuid4()), name='engineer')
+        engineer.save()
+
+        peter = Employee(id=str(uuid4()), name='Peter', department=engineering, role=engineer)
+        peter.save()
+
+        roy = Employee(id=str(uuid4()), name='Roy', department=engineering, role=engineer)
+        roy.save()
+
+        tracy = Employee(id=str(uuid4()), name='Tracy', department=hr, role=manager)
+        tracy.save()
+
+.. code-block:: bash
     $ python
-
-    >>> from models import engine, db_session, Base, Department, Employee
-    >>> Base.metadata.create_all(bind=engine)
-
-    >>> # Fill the tables with some data
-    >>> engineering = Department(name='Engineering')
-    >>> db_session.add(engineering)
-    >>> hr = Department(name='Human Resources')
-    >>> db_session.add(hr)
-
-    >>> peter = Employee(name='Peter', department=engineering)
-    >>> db_session.add(peter)
-    >>> roy = Employee(name='Roy', department=engineering)
-    >>> db_session.add(roy)
-    >>> tracy = Employee(name='Tracy', department=hr)
-    >>> db_session.add(tracy)
-    >>> db_session.commit()
+    >>> from database import init_db
+    >>> init_db()
 
 Testing our GraphQL schema
 --------------------------
