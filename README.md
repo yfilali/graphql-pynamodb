@@ -13,7 +13,7 @@ A [PynamoDB](http://pynamodb.readthedocs.io/) integration for [Graphene](http://
 For instaling graphene, just run this command in your shell
 
 ```bash
-pip install git+git://github.com/yfilali/graphql-pynamodb
+pip install graphene-pynamodb
 ```
 
 ## Examples
