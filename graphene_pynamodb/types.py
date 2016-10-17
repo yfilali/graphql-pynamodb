@@ -16,7 +16,6 @@ from pynamodb.models import Model
 from .converter import convert_pynamo_attribute
 from .registry import Registry, get_global_registry
 from .relationships import RelationshipResult
-from .utils import get_query
 
 
 def get_model_fields(model):
@@ -124,8 +123,11 @@ class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
 
     @classmethod
     def get_query(cls, context):
-        model = cls._meta.model
-        return get_query(model, context)
+        query = getattr(cls._meta.model, 'scan', None)
+        if not query:
+            raise Exception('A query in the model Base is required for querying.\n'
+                            'Read more http://pynamodb.readthedocs.io/en/latest/quickstart.html?highlight=query#querying')
+        return query
 
     @classmethod
     def get_node(cls, id, context, info):

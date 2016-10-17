@@ -4,9 +4,6 @@ from .fields import (
 from .types import (
     PynamoObjectType,
 )
-from .utils import (
-    get_query
-)
 
 __all__ = ['PynamoObjectType',
            'PynamoConnectionField',
