@@ -18,7 +18,7 @@ class Editor(Model):
         host = DB_HOST
         region = DB_REGION
 
-    editor_id = NumberAttribute(hash_key=True)
+    id = NumberAttribute(hash_key=True)
     name = UnicodeAttribute()
 
 
@@ -42,7 +42,7 @@ class Article(Model):
     id = NumberAttribute(hash_key=True)
     headline = UnicodeAttribute()
     pub_date = UTCDateTimeAttribute(default=datetime.now)
-    reporter_id = NumberAttribute()
+    reporter = OneToOne('Reporter')
 
 
 class Reporter(Model):

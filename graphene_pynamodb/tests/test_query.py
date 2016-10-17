@@ -1,3 +1,5 @@
+import logging
+
 import graphene
 from graphene.relay import Node
 
@@ -5,25 +7,25 @@ from .models import Article, Editor, Reporter
 from ..fields import PynamoConnectionField
 from ..types import PynamoObjectType
 
+logging.basicConfig()
+
 
 def setup_fixtures():
-    if not Reporter.exists():
-        Reporter.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
+    for model in [Reporter, Article, Editor]:
+        if not model.exists():
+            model.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
+
         reporter = Reporter(id=1, first_name='ABA', last_name='X')
         reporter.save()
         reporter2 = Reporter(id=2, first_name='ABO', last_name='Y')
         reporter2.save()
-    if not Article.exists():
-        Article.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
         article = Article(id=1, headline='Hi!')
         article.reporter = reporter
         article.save()
         article2 = Article(id=3, headline='My Article')
         article2.reporter = reporter
         article2.save()
-    if not Editor.exists():
-        Editor.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
-        editor = Editor(editor_id=1, name="John")
+        editor = Editor(id=1, name="John")
         editor.save()
 
 
@@ -228,7 +230,6 @@ def test_should_custom_identifier():
 
     schema = graphene.Schema(query=Query)
     result = schema.execute(query)
-    test = list(Editor.scan())
     assert not result.errors
     assert result.data["allEditors"] == expected["allEditors"]
 
@@ -268,7 +269,7 @@ def test_should_mutate_well():
             new_article = Article(
                 id=3,
                 headline=args.get('headline'),
-                reporter_id=int(args.get('reporter_id')),
+                reporter=Reporter.get(int(args.get('reporter_id'))),
             )
             new_article.save()
             ok = True
@@ -289,8 +290,10 @@ def test_should_mutate_well():
           ) {
             ok
             article {
-                headline
-                reporterId
+              headline
+              reporter {
+                id
+              }
             }
           }
         }
@@ -300,7 +303,9 @@ def test_should_mutate_well():
             'ok': True,
             'article': {
                 'headline': 'My Article',
-                'reporterId': 1
+                'reporter': {
+                    'id': 1
+                }
             }
         },
     }

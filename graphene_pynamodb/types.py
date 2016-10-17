@@ -9,11 +9,13 @@ from graphene.types.options import Options
 from graphene.types.utils import merge, yank_fields_from_attrs
 from graphene.utils.is_base_type import is_base_type
 from pynamodb.attributes import Attribute, NumberAttribute
+from pynamodb.connection.base import MetaTable
 from pynamodb.exceptions import DoesNotExist
 from pynamodb.models import Model
 
-from graphene_pynamodb.converter import convert_pynamo_attribute
+from .converter import convert_pynamo_attribute
 from .registry import Registry, get_global_registry
+from .relationships import RelationshipResult
 from .utils import get_query
 
 
@@ -49,31 +51,6 @@ def construct_fields(options):
             continue
         converted_column = convert_pynamo_attribute(attribute, attribute, options.registry)
         fields[name] = converted_column
-
-    # TODO implement relationships for pynamodb
-    # for name, composite in inspected_model.composites.items():
-    #     is_not_in_only = only_fields and name not in only_fields
-    #     is_already_created = name in options.fields
-    #     is_excluded = name in exclude_fields or is_already_created
-    #     if is_not_in_only or is_excluded:
-    #         # We skip this field if we specify only_fields and is not
-    #         # in there. Or when we excldue this field in exclude_fields
-    #         continue
-    #     converted_composite = convert_sqlalchemy_composite(composite, options.registry)
-    #     fields[name] = converted_composite
-    #
-    # # Get all the columns for the relationships on the model
-    # for relationship in inspected_model.relationships:
-    #     is_not_in_only = only_fields and relationship.key not in only_fields
-    #     is_already_created = relationship.key in options.fields
-    #     is_excluded = relationship.key in exclude_fields or is_already_created
-    #     if is_not_in_only or is_excluded:
-    #         # We skip this field if we specify only_fields and is not
-    #         # in there. Or when we excldue this field in exclude_fields
-    #         continue
-    #     converted_relationship = convert_relationship(relationship, options.registry)
-    #     name = relationship.key
-    #     fields[name] = converted_relationship
 
     return fields
 
@@ -131,9 +108,16 @@ class PynamoObjectTypeMeta(ObjectTypeMeta):
 
 class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
     @classmethod
+    def inspect_model(cls, model):
+        if model._meta_table is None:
+            model._meta_table = MetaTable(model._get_connection().describe_table())
+
+    @classmethod
     def is_type_of(cls, root, context, info):
         if isinstance(root, cls):
             return True
+        if isinstance(root, RelationshipResult):
+            return cls.is_type_of(root.__wrapped__, context, info)
         if not issubclass(type(root), Model):
             raise Exception(('Received incompatible instance "{}".').format(root))
         return isinstance(root, cls._meta.model)
@@ -146,6 +130,7 @@ class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
     @classmethod
     def get_node(cls, id, context, info):
         try:
+            PynamoObjectType.inspect_model(cls._meta.model)
             if isinstance(getattr(cls._meta.model, cls._meta.model._meta_table.hash_keyname), NumberAttribute):
                 return cls._meta.model.get(int(id))
             else:
@@ -158,6 +143,7 @@ class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
     def resolve_id(self, args, context, info):
         graphene_type = info.parent_type.graphene_type
         if is_node(graphene_type):
+            PynamoObjectType.inspect_model(graphene_type._meta.model)
             return getattr(self, graphene_type._meta.model._meta_table.hash_keyname)
 
         return getattr(args, graphene_type._meta.id)

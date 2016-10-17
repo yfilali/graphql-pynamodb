@@ -36,6 +36,7 @@ setup(
         'graphene>=1.0',
         'pynamodb>=1.5.0',
         'singledispatch>=3.4.0.3',
+        'wrapt>=1.10.8'
     ],
     setup_requires=['pytest-runner'],
     tests_require=[
