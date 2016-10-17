@@ -11,35 +11,6 @@ from graphene_pynamodb.fields import PynamoConnectionField
 from graphene_pynamodb.relationships import OneToOne, OneToMany
 
 
-def convert_pynamo_composite(composite, registry):
-    converter = registry.get_converter_for_composite(composite.composite_class)
-    if not converter:
-        try:
-            raise Exception(
-                "Don't know how to convert the composite field %s (%s)" %
-                (composite, composite.composite_class))
-        except AttributeError:
-            # handle fields that are not attached to a class yet (don't have a parent)
-            raise Exception(
-                "Don't know how to convert the composite field %r (%s)" %
-                (composite, composite.composite_class))
-    return converter(composite, registry)
-
-
-def _register_composite_class(cls, registry=None):
-    if registry is None:
-        from .registry import get_global_registry
-        registry = get_global_registry()
-
-    def inner(fn):
-        registry.register_composite_converter(cls, fn)
-
-    return inner
-
-
-convert_pynamo_composite.register = _register_composite_class
-
-
 @singledispatch
 def convert_pynamo_attribute(type, attribute, registry=None):
     raise Exception(
