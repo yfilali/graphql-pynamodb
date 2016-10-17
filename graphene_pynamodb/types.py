@@ -115,10 +115,8 @@ class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
     def is_type_of(cls, root, context, info):
         if isinstance(root, cls):
             return True
-        if isinstance(root, RelationshipResult):
-            return cls.is_type_of(root.__wrapped__, context, info)
-        if not issubclass(type(root), Model):
-            raise Exception(('Received incompatible instance "{}".').format(root))
+        if isinstance(root, RelationshipResult) and root.__wrapped__ == cls._meta.model:
+            return True
         return isinstance(root, cls._meta.model)
 
     @classmethod
