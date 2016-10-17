@@ -78,14 +78,14 @@ query = '''
 result = schema.execute(query)
 ```
 
-To learn more check out the following [examples](examples/):
+To learn more check out the following [examples](https://github.com/yfilali/graphql-pynamodb/tree/master/examples/):
 
-* **Full example**: [Flask PynamoDB example](examples/flask_pynamodb)
+* **Full example**: [Flask PynamoDB example](https://github.com/yfilali/graphql-pynamodb/tree/master/examples/flask_pynamodb)
 
 
 ## Contributing
 
-After cloning this repo, ensure dependencies are installed by running:
+After cloning [this repo](https://github.com/yfilali/graphql-pynamodb), ensure dependencies are installed by running:
 
 ```sh
 python setup.py install

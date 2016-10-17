@@ -82,15 +82,18 @@ Then you can simply query the schema:
     '''
     result = schema.execute(query)
 
-To learn more check out the following `examples <examples/>`__:
+To learn more check out the following
+`examples <https://github.com/yfilali/graphql-pynamodb/tree/master/examples/>`__:
 
 -  **Full example**: `Flask PynamoDB
-   example <examples/flask_pynamodb>`__
+   example <https://github.com/yfilali/graphql-pynamodb/tree/master/examples/flask_pynamodb>`__
 
 Contributing
 ------------
 
-After cloning this repo, ensure dependencies are installed by running:
+After cloning `this
+repo <https://github.com/yfilali/graphql-pynamodb>`__, ensure
+dependencies are installed by running:
 
 .. code:: sh
 
