@@ -66,9 +66,15 @@ curl -X POST -H "Content-Type: application/json" -d '{"email":"you@email.com","p
 
 Now head on over to
 [http://127.0.0.1:5000/graphql](http://127.0.0.1:5000/graphql)
-and run some queries!
+and run some queries! You'll need a browser extension like ModHeaders to pass an Authorization header with your JWT token:
+Authorization: JWT token-goes-here
 
-Here is one to get you started:
+You can also test it using curl:
+```
+curl -X GET -H "Authorization: JWT [token from previous curl request]" "http://127.0.0.1:5000/graphql?query=\{viewer\{id,firstName,lastName,email\}\}"
+```
+
+Here is a simple GraphQL query to get you started:
 ```
 {
   viewer {
