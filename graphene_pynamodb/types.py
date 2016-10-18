@@ -9,7 +9,6 @@ from graphene.types.options import Options
 from graphene.types.utils import merge, yank_fields_from_attrs
 from graphene.utils.is_base_type import is_base_type
 from pynamodb.attributes import Attribute, NumberAttribute
-from pynamodb.connection.base import MetaTable
 from pynamodb.exceptions import DoesNotExist
 from pynamodb.models import Model
 
@@ -107,11 +106,6 @@ class PynamoObjectTypeMeta(ObjectTypeMeta):
 
 
 class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
-    @classmethod
-    def inspect_model(cls, model):
-        if model._meta_table is None:
-            model._meta_table = MetaTable(model._get_connection().describe_table())
-
     @classmethod
     def is_type_of(cls, root, context, info):
         if isinstance(root, cls):
