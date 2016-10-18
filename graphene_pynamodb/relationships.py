@@ -29,7 +29,7 @@ class RelationshipResult(ObjectProxy):
         return isinstance(other, self._model) and self._key == getattr(other, self._key_name)
 
     def __ne__(self, other):
-        return self.__model__ != other
+        return not self.__eq__(other)
 
 
 class Relationship(Attribute):
