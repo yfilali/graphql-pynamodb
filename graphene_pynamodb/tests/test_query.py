@@ -1,13 +1,9 @@
-import logging
-
 import graphene
 from graphene.relay import Node
 
 from .models import Article, Editor, Reporter
 from ..fields import PynamoConnectionField
 from ..types import PynamoObjectType
-
-logging.basicConfig()
 
 
 def setup_fixtures():

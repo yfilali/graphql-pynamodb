@@ -1,5 +1,3 @@
-import logging
-
 import graphene
 from graphene import Node
 from mock import MagicMock
@@ -8,8 +6,6 @@ from wrapt import ObjectProxy
 from .models import Reporter, Article
 from ..relationships import OneToOne, OneToMany, RelationshipResult
 from ..types import PynamoObjectType
-
-logging.basicConfig()
 
 
 def setup_fixtures():
