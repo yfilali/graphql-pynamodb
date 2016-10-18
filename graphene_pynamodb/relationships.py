@@ -11,6 +11,8 @@ class RelationshipResult(ObjectProxy):
     _model = None
 
     def __init__(self, key_name, key, obj):
+        if isinstance(obj, type) and not issubclass(obj, Model):
+            raise Exception("Invalid class passed to RelationshipResult, expected a Model class, got %s" % type(obj))
         super(RelationshipResult, self).__init__(obj)
         self._key = key
         self._key_name = key_name

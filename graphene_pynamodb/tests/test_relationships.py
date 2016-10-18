@@ -151,3 +151,11 @@ def test_result_should_be_lazy():
     assert relationship.reporter.id == 1
     assert relationship.headline == "Hi!"
     MockArticle.get.assert_called_once_with(1)
+
+
+def test_relationships_should_compare_well():
+    article1 = Article(1, healine="test")
+    article2 = Article(2, healine="test")
+    rel1 = RelationshipResult('id', 1, Article)
+    assert rel1 == article1
+    assert rel1 != article2
