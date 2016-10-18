@@ -85,6 +85,25 @@ Then you can simply query the schema:
 To learn more check out the following
 `examples <https://github.com/yfilali/graphql-pynamodb/tree/master/examples/>`__:
 
+Limitations
+-----------
+
+graphene-pynamodb includes a basic implementation of relationships using
+sets. OneToOne and OneToMany relationships are serialized as sets of the
+ids and unserialized lazyly. The limit for an item's size in DynamoDB is
+400KB (see
+http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
+This means the total "row" size including the serialized relationship
+needs to fit within 400KB so make sure to use this accordingly.
+
+In addition, scan operations on DynamoDB are unsorted by design. This
+means that there is no reliable way to get a paginated result (Cursor
+support) on a root PynamoConnectionField.
+
+This means that if you need to paginate items, it is best to have them
+as a OneToMany relationship inside another Field (usually viewer or
+node).
+
 -  **Full example**: `Flask PynamoDB
    example <https://github.com/yfilali/graphql-pynamodb/tree/master/examples/flask_pynamodb>`__
 
