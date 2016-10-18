@@ -17,10 +17,6 @@ class RelationshipResult(ObjectProxy):
         self._model = obj
 
     def __getattr__(self, name):
-        # If we are being to lookup '__wrapped__' then the
-        # '__init__()' method cannot have been called.
-        if name == '__wrapped__':
-            raise ValueError('wrapper has not been initialised')
         if name.startswith('_'):
             return getattr(self.__wrapped__, name)
         if name == self._key_name:
@@ -31,10 +27,10 @@ class RelationshipResult(ObjectProxy):
 
     def __eq__(self, other):
         # Shallow compare by id for relationship purposes
-        if isinstance(self.__model__, type) and issubclass(self.__model__, Model):
-            return isinstance(other, self.__model__) and self.__key__ == getattr(other, self.__key_name__)
+        if isinstance(self._model, type) and issubclass(self._model, Model):
+            return isinstance(other, self._model) and self._key == getattr(other, self._key_name)
         else:
-            return (self.__model__.__class__ == other.__class__) and self.__key__ == getattr(other, self.__key_name__)
+            return (self._model.__class__ == other.__class__) and self._key == getattr(other, self._key_name)
 
     def __ne__(self, other):
         return self.__model__ != other

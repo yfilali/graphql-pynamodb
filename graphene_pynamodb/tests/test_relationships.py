@@ -135,7 +135,7 @@ def test_onetomany_should_deserialize_well():
     assert len(articles) == 2
     assert isinstance(articles[0], Article.__class__)
     assert isinstance(articles[1], Article.__class__)
-    assert articles[0].id == 1
-    assert articles[1].id == 3
+    assert articles[0] == Article.get(1)
+    assert articles[1] == Article.get(3)
     assert articles[0].headline == "Hi!"
     assert articles[1].headline == "My Article"
