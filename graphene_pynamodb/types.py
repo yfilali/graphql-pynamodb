@@ -12,7 +12,7 @@ from pynamodb.attributes import Attribute, NumberAttribute
 from pynamodb.exceptions import DoesNotExist
 from pynamodb.models import Model
 
-from graphene_pynamodb.utils import get_key_name
+from .utils import get_key_name
 from .converter import convert_pynamo_attribute
 from .registry import Registry, get_global_registry
 from .relationships import RelationshipResult
