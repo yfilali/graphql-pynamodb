@@ -65,3 +65,6 @@ target/
 # Databases
 *.sqlite3
 .vscode
+
+#OSX
+.DS_Store
