@@ -26,11 +26,7 @@ class RelationshipResult(ObjectProxy):
         return getattr(self.__wrapped__, name)
 
     def __eq__(self, other):
-        # Shallow compare by id for relationship purposes
-        if isinstance(self._model, type) and issubclass(self._model, Model):
-            return isinstance(other, self._model) and self._key == getattr(other, self._key_name)
-        else:
-            return (self._model.__class__ == other.__class__) and self._key == getattr(other, self._key_name)
+        return isinstance(other, self._model) and self._key == getattr(other, self._key_name)
 
     def __ne__(self, other):
         return self.__model__ != other
