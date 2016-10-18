@@ -1,3 +1,5 @@
+import logging
+
 import graphene
 from graphene.relay import Node
 
@@ -5,29 +7,33 @@ from .models import Article, Editor, Reporter
 from ..fields import PynamoConnectionField
 from ..types import PynamoObjectType
 
+logging.basicConfig()
+
 
 def setup_fixtures():
-    for model in [Reporter, Article, Editor]:
-        if not model.exists():
-            model.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
-
+    if not Reporter.exists():
+        Reporter.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
         reporter = Reporter(id=1, first_name='ABA', last_name='X')
+        reporter.articles = [Article(1), Article(3)]
         reporter.save()
         reporter2 = Reporter(id=2, first_name='ABO', last_name='Y')
         reporter2.save()
-        article = Article(id=1, headline='Hi!')
-        article.reporter = reporter
-        article.save()
-        article2 = Article(id=3, headline='My Article')
-        article2.reporter = reporter
+    if not Article.exists():
+        Article.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
+        article1 = Article(id=1, headline='Hi!', reporter=Reporter(1))
+        article1.save()
+        article2 = Article(id=3, headline='My Article', reporter=Reporter(1))
         article2.save()
+    if not Editor.exists():
+        Editor.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
         editor = Editor(id=1, name="John")
         editor.save()
 
 
-def test_should_query_well():
-    setup_fixtures()
+setup_fixtures()
 
+
+def test_should_query_well():
     class ReporterType(PynamoObjectType):
         class Meta:
             model = Reporter
@@ -37,7 +43,7 @@ def test_should_query_well():
         reporters = graphene.List(ReporterType)
 
         def resolve_reporter(self, *args, **kwargs):
-            return next(Reporter.query(1))
+            return Reporter.get(1)
 
         def resolve_reporters(self, *args, **kwargs):
             return Reporter.scan()
@@ -74,8 +80,6 @@ def test_should_query_well():
 
 
 def test_should_node():
-    setup_fixtures()
-
     class ReporterNode(PynamoObjectType):
         class Meta:
             model = Reporter
@@ -101,10 +105,10 @@ def test_should_node():
         all_articles = PynamoConnectionField(ArticleNode)
 
         def resolve_reporter(self, *args, **kwargs):
-            return next(Reporter.query(1))
+            return Reporter.get(1)
 
         def resolve_article(self, *args, **kwargs):
-            return next(Article.query(1))
+            return Article.get(1)
 
     query = '''
         query ReporterQuery {
@@ -182,8 +186,6 @@ def test_should_node():
 
 
 def test_should_custom_identifier():
-    setup_fixtures()
-
     class EditorNode(PynamoObjectType):
         class Meta:
             model = Editor
@@ -231,8 +233,6 @@ def test_should_custom_identifier():
 
 
 def test_should_mutate_well():
-    setup_fixtures()
-
     class EditorNode(PynamoObjectType):
         class Meta:
             model = Editor
@@ -311,3 +311,181 @@ def test_should_mutate_well():
     assert not result.errors
     assert result.data["createArticle"]["ok"] == expected["createArticle"]["ok"]
     assert all(item in result.data["createArticle"]["article"] for item in expected["createArticle"]["article"])
+
+
+def test_should_support_first():
+    class ArticleNode(PynamoObjectType):
+        class Meta:
+            model = Article
+            interfaces = (Node,)
+
+    class ReporterNode(PynamoObjectType):
+        class Meta:
+            model = Reporter
+            interfaces = (Node,)
+
+    class Query(graphene.ObjectType):
+        node = Node.Field()
+        reporter = graphene.Field(ReporterNode)
+
+        def resolve_reporter(self, *args, **kwargs):
+            return Reporter.get(1)
+
+    query = '''
+        query ReporterQuery {
+          reporter {
+            id,
+            firstName,
+            articles(first: 1) {
+              edges {
+                node {
+                  id
+                  headline
+                }
+              }
+              pageInfo {
+                hasNextPage
+                hasPreviousPage
+                startCursor
+                endCursor
+              }
+            }
+            lastName,
+            email
+          }
+        }
+    '''
+    expected = {
+        'reporter': {
+            'articles': {
+                'edges': [{
+                    'node': {
+                        'id': 'QXJ0aWNsZU5vZGU6MQ==',
+                        'headline': 'Hi!'
+                    }
+                }],
+                'pageInfo': {
+                    'hasNextPage': True,
+                    'hasPreviousPage': False,
+                    'startCursor': '1',
+                    'endCursor': '1'
+                }
+            }
+        }
+    }
+
+    schema = graphene.Schema(query=Query)
+    result = schema.execute(query)
+    assert not result.errors
+    assert result.data["reporter"]["articles"]["edges"] == expected["reporter"]["articles"]["edges"]
+    assert result.data["reporter"]["articles"]["pageInfo"] == expected["reporter"]["articles"]["pageInfo"]
+
+
+def test_should_support_last():
+    class ArticleNode(PynamoObjectType):
+        class Meta:
+            model = Article
+            interfaces = (Node,)
+
+    class ReporterNode(PynamoObjectType):
+        class Meta:
+            model = Reporter
+            interfaces = (Node,)
+
+    class Query(graphene.ObjectType):
+        node = Node.Field()
+        reporter = graphene.Field(ReporterNode)
+
+        def resolve_reporter(self, *args, **kwargs):
+            return Reporter.get(1)
+
+    query = '''
+        query ReporterQuery {
+          reporter {
+            id,
+            firstName,
+            articles(last: 1) {
+              edges {
+                node {
+                  id
+                  headline
+                }
+              }
+            }
+            lastName,
+            email
+          }
+        }
+    '''
+    expected = {
+        'reporter': {
+            'articles': {
+                'edges': [{
+                    'node': {
+                        'id': 'QXJ0aWNsZU5vZGU6Mw==',
+                        'headline': 'My Article'
+                    }
+                }]
+            }
+        }
+    }
+
+    schema = graphene.Schema(query=Query)
+    result = schema.execute(query)
+    assert not result.errors
+    assert result.data["reporter"]["articles"]["edges"] == expected["reporter"]["articles"]["edges"]
+
+
+def test_should_support_after():
+    class ArticleNode(PynamoObjectType):
+        class Meta:
+            model = Article
+            interfaces = (Node,)
+
+    class ReporterNode(PynamoObjectType):
+        class Meta:
+            model = Reporter
+            interfaces = (Node,)
+
+    class Query(graphene.ObjectType):
+        node = Node.Field()
+        reporter = graphene.Field(ReporterNode)
+
+        def resolve_reporter(self, *args, **kwargs):
+            return Reporter.get(1)
+
+    query = '''
+        query ReporterQuery {
+          reporter {
+            id,
+            firstName,
+            articles(after: "1") {
+              edges {
+                node {
+                  id
+                  headline
+                }
+              }
+            }
+            lastName,
+            email
+          }
+        }
+    '''
+    expected = {
+        'reporter': {
+            'articles': {
+                'edges': [{
+                    'node': {
+                        'id': 'QXJ0aWNsZU5vZGU6Mw==',
+                        'headline': 'My Article'
+                    }
+                }]
+            }
+        }
+    }
+
+    schema = graphene.Schema(query=Query)
+    result = schema.execute(query)
+    assert not result.errors
+    assert result.data["reporter"]["articles"]["edges"] == expected["reporter"]["articles"]["edges"]

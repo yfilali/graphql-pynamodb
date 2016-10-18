@@ -13,6 +13,7 @@ from pynamodb.connection.base import MetaTable
 from pynamodb.exceptions import DoesNotExist
 from pynamodb.models import Model
 
+from graphene_pynamodb.utils import get_key_name
 from .converter import convert_pynamo_attribute
 from .registry import Registry, get_global_registry
 from .relationships import RelationshipResult
@@ -130,8 +131,7 @@ class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
     @classmethod
     def get_node(cls, id, context, info):
         try:
-            PynamoObjectType.inspect_model(cls._meta.model)
-            if isinstance(getattr(cls._meta.model, cls._meta.model._meta_table.hash_keyname), NumberAttribute):
+            if isinstance(getattr(cls._meta.model, get_key_name(cls._meta.model)), NumberAttribute):
                 return cls._meta.model.get(int(id))
             else:
                 return cls._meta.model.get(id)
@@ -143,7 +143,6 @@ class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
     def resolve_id(self, args, context, info):
         graphene_type = info.parent_type.graphene_type
         if is_node(graphene_type):
-            PynamoObjectType.inspect_model(graphene_type._meta.model)
-            return getattr(self, graphene_type._meta.model._meta_table.hash_keyname)
+            return getattr(self, get_key_name(graphene_type._meta.model))
 
         return getattr(args, graphene_type._meta.id)

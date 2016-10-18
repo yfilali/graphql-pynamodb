@@ -6,6 +6,8 @@ from graphene import relay
 from graphene.relay.connection import PageInfo
 from graphql_relay.connection.connectiontypes import Edge
 
+from graphene_pynamodb.utils import get_key_name
+
 
 class PynamoConnectionField(relay.ConnectionField):
     def __init__(self, type, *args, **kwargs):
@@ -21,57 +23,48 @@ class PynamoConnectionField(relay.ConnectionField):
 
     @classmethod
     def get_query(cls, model, context, info, args):
-        return model.scan()
+        return model.scan
 
     @classmethod
-    def connection_resolver(cls, resolver, connection, model, root, args, context, info, **kwargs):
+    def connection_resolver(cls, resolver, connection, model, root, args, context, info):
         iterable = resolver(root, args, context, info)
-        if iterable is None and len(args):
-            iterable = getattr(root, args[0])
-        if iterable is None:
-            iterable = cls.get_query(model, context, info, args)
-        iterable = iter(iterable if iterable is not None else [])
+
+        first = args.get('first')
+        after = args.get('after')
+        last = args.get('last')
+        before = args.get('before')
+        has_previous_page = bool(after)
+        page_size = first if first else last if last else None
         connection_type = connection
-        edge_type = connection.Edge or Edge
         pageinfo_type = PageInfo
 
-        full_args = dict(args, **kwargs)
-        first = full_args.get('first')
-        after = full_args.get('after')
-        has_previous_page = bool(after)
-        page_size = first if first else None
+        # get the results from the attribute requested (relationship)
+        if not iterable and root and hasattr(root, info.field_name):
+            iterable = getattr(root, info.field_name)
 
-        start_cursor = None
-        if after:
-            for item in iterable:
-                if item == after:
-                    start_cursor = iterable.next()
-                    break
+        # get a full scan query since we have no root
+        if not iterable and not root:
+            query = cls.get_query(model, context, info, args)
+            iterable = query()
+            if first or last or after or before:
+                raise UserWarning("DynamoDB scan operations have no predictable sort. Arguments first, last, after " +
+                                  "and before will have unpredictable results")
 
-        edges = []
-        if page_size:
-            while len(edges) < page_size:
-                try:
-                    entity = iterable.next()
-                except StopIteration:
-                    break
+        iterable = iterable if isinstance(iterable, list) else list(iterable)
 
-                edge = edge_type(node=entity, cursor=entity)
-                edges.append(edge)
-        else:
-            edges = [edge_type(node=entity, cursor=entity) for entity in iterable]
+        if last:
+            iterable = iterable[-last:]
 
+        (has_next, edges) = cls.get_edges_from_iterable(iterable, model, edge_type=connection.Edge, after=after,
+                                                        page_size=page_size)
+
+        key_name = get_key_name(model)
         try:
-            start_cursor = edges[0].node
-            end_cursor = edges[-1].node
+            start_cursor = getattr(edges[0].node, key_name)
+            end_cursor = getattr(edges[-1].node, key_name)
         except IndexError:
+            start_cursor = None
             end_cursor = None
-
-        try:
-            next(iterable)
-            has_next = True
-        except StopIteration:
-            has_next = False
 
         # Construct the connection
         return connection_type(
@@ -86,3 +79,24 @@ class PynamoConnectionField(relay.ConnectionField):
 
     def get_resolver(self, parent_resolver):
         return partial(self.connection_resolver, parent_resolver, self.type, self.model)
+
+    @classmethod
+    def get_edges_from_iterable(cls, iterable, model, edge_type=Edge, after=None, page_size=None):
+        edges = []
+        count = 0
+        has_next = False
+
+        for entity in iterable:
+            if after:
+                if after != str(getattr(entity, get_key_name(model))):
+                    continue
+                else:
+                    after = False
+                    continue
+            if page_size and count >= page_size:
+                has_next = True
+                break
+            edges.append(edge_type(node=entity, cursor=entity))
+            count += 1
+
+        return [has_next, edges]
