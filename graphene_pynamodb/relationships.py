@@ -21,8 +21,8 @@ class RelationshipResult(ObjectProxy):
             return getattr(self.__wrapped__, name)
         if name == self._key_name:
             return self._key
-        if isinstance(self.__wrapped__, type) and issubclass(self.__wrapped__, Model):
-            self.__wrapped__ = self.__wrapped__.get(self._key)
+        if name in self._model._attributes and isinstance(self.__wrapped__, type):
+            self.__wrapped__ = self._model.get(self._key)
         return getattr(self.__wrapped__, name)
 
     def __eq__(self, other):

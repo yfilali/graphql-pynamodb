@@ -2,9 +2,11 @@ import logging
 
 import graphene
 from graphene import Node
+from mock import MagicMock
+from wrapt import ObjectProxy
 
-from graphene_pynamodb.relationships import OneToOne, OneToMany
 from .models import Reporter, Article
+from ..relationships import OneToOne, OneToMany, RelationshipResult
 from ..types import PynamoObjectType
 
 logging.basicConfig()
@@ -22,7 +24,7 @@ def setup_fixtures():
             interfaces = (Node,)
 
     reporter1 = Reporter(1, first_name="John", last_name="Snow")
-    article1 = Article(1, headline="Awesome Article", reporter=reporter1)
+    article1 = Article(1, headline="Hi!", reporter=reporter1)
     article2 = Article(2, headline="Lame Article", reporter=reporter1)
     reporter1.articles = [article1, article2]
 
@@ -86,7 +88,7 @@ def test_relationships_should_resolve_well():
             }
         },
         'articles': [{
-            'headline': 'Awesome Article',
+            'headline': 'Hi!',
             'reporter': {
                 'id': 'UmVwb3J0ZXJUeXBlOjE='
             }
@@ -115,9 +117,10 @@ def test_onetoone_should_serialize_well():
 def test_onetoone_should_deserialize_well():
     fixtures = setup_fixtures()
     relationship = OneToOne(Article)
-    article = relationship.deserialize(2)
+    article = relationship.deserialize(1)
     assert isinstance(article, Article.__class__)
-    assert article.id == fixtures["article2"].id
+    assert article.id == fixtures["article1"].id
+    assert article.headline == fixtures["article1"].headline
 
 
 def test_onetomany_should_serialize_well():
@@ -130,12 +133,25 @@ def test_onetomany_should_deserialize_well():
     relationship = OneToMany(Article)
 
     articles = relationship.deserialize([1, 3])
-    print(articles)
-
     assert len(articles) == 2
-    assert isinstance(articles[0], Article.__class__)
-    assert isinstance(articles[1], Article.__class__)
-    assert articles[0] == Article.get(1)
-    assert articles[1] == Article.get(3)
+    # test before db call (lazy)
+    assert articles[0] == Article(1)
+    assert articles[1] == Article(3)
+    # test db call
     assert articles[0].headline == "Hi!"
     assert articles[1].headline == "My Article"
+
+
+def test_result_should_be_lazy():
+    MockArticle = ObjectProxy(Article)
+    MockArticle.get = MagicMock(return_value=Article.get(1))
+    relationship = RelationshipResult('id', 1, MockArticle)
+
+    # test before db call (lazy)
+    assert relationship.id == 1
+    MockArticle.get.assert_not_called()
+    # test db call only once
+    assert relationship.headline == "Hi!"
+    assert relationship.reporter.id == 1
+    assert relationship.headline == "Hi!"
+    MockArticle.get.assert_called_once_with(1)
