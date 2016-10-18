@@ -21,7 +21,6 @@ class PynamoConnectionField(relay.ConnectionField):
 
     @classmethod
     def get_query(cls, model, context, info, args):
-        # TODO this is very very basic and needs to handle connection params from args like first, after, etc.
         return model.scan()
 
     @classmethod
