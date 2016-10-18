@@ -85,6 +85,9 @@ Then you can simply query the schema:
 To learn more check out the following
 `examples <https://github.com/yfilali/graphql-pynamodb/tree/master/examples/>`__:
 
+-  **Full example**: `Flask PynamoDB
+   example <https://github.com/yfilali/graphql-pynamodb/tree/master/examples/flask_pynamodb>`__
+
 Limitations
 -----------
 
@@ -103,9 +106,6 @@ support) on a root PynamoConnectionField.
 This means that if you need to paginate items, it is best to have them
 as a OneToMany relationship inside another Field (usually viewer or
 node).
-
--  **Full example**: `Flask PynamoDB
-   example <https://github.com/yfilali/graphql-pynamodb/tree/master/examples/flask_pynamodb>`__
 
 Contributing
 ------------

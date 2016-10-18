@@ -80,6 +80,10 @@ result = schema.execute(query)
 
 To learn more check out the following [examples](https://github.com/yfilali/graphql-pynamodb/tree/master/examples/):
 
+* **Full example**: [Flask PynamoDB example](https://github.com/yfilali/graphql-pynamodb/tree/master/examples/flask_pynamodb)
+
+
+
 ## Limitations
 
 graphene-pynamodb includes a basic implementation of relationships using sets.
@@ -90,7 +94,6 @@ In addition, scan operations on DynamoDB are unsorted by design. This means that
 
 This means that if you need to paginate items, it is best to have them as a OneToMany relationship inside another Field (usually viewer or node).
 
-* **Full example**: [Flask PynamoDB example](https://github.com/yfilali/graphql-pynamodb/tree/master/examples/flask_pynamodb)
 
 
 ## Contributing
