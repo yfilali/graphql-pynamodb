@@ -12,10 +12,10 @@ from pynamodb.attributes import Attribute, NumberAttribute
 from pynamodb.exceptions import DoesNotExist
 from pynamodb.models import Model
 
-from .utils import get_key_name
 from .converter import convert_pynamo_attribute
 from .registry import Registry, get_global_registry
 from .relationships import RelationshipResult
+from .utils import get_key_name
 
 
 def get_model_fields(model):
@@ -115,14 +115,6 @@ class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
         return isinstance(root, cls._meta.model)
 
     @classmethod
-    def get_query(cls, context):
-        query = getattr(cls._meta.model, 'scan', None)
-        if not query:
-            raise Exception('A query in the model Base is required for querying.\n Read more '
-                            'http://pynamodb.readthedocs.io/en/latest/quickstart.html?highlight=query#querying')
-        return query
-
-    @classmethod
     def get_node(cls, id, context, info):
         try:
             if isinstance(getattr(cls._meta.model, get_key_name(cls._meta.model)), NumberAttribute):
@@ -138,5 +130,3 @@ class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
         graphene_type = info.parent_type.graphene_type
         if is_node(graphene_type):
             return getattr(self, get_key_name(graphene_type._meta.model))
-
-        return getattr(args, graphene_type._meta.id)
