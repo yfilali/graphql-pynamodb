@@ -47,8 +47,7 @@ class PynamoConnectionField(relay.ConnectionField):
                     "DynamoDB scan operations have no predictable sort. Arguments first, last, after " +
                     "and before will have unpredictable results")
 
-        iterable = iterable if isinstance(iterable, list) else list([])
-
+        iterable = iterable if isinstance(iterable, list) else list(iterable) if iterable else []
         if last:
             iterable = iterable[-last:]
 
