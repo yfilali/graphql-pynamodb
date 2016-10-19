@@ -6,29 +6,23 @@ from wrapt import ObjectProxy
 
 
 class RelationshipResult(ObjectProxy):
-    _key = None
-    _key_name = ''
-    _model = None
-
     def __init__(self, key_name, key, obj):
         if isinstance(obj, type) and not issubclass(obj, Model):
             raise Exception("Invalid class passed to RelationshipResult, expected a Model class, got %s" % type(obj))
         super(RelationshipResult, self).__init__(obj)
-        self._key = key
-        self._key_name = key_name
-        self._model = obj
+        self._self_key = key
+        self._self_key_name = key_name
+        self._self_model = obj
 
     def __getattr__(self, name):
-        if name.startswith('_'):
-            return getattr(self.__wrapped__, name)
-        if name == self._key_name:
-            return self._key
-        if isinstance(self.__wrapped__, type):
-            self.__wrapped__ = self._model.get(self._key)
-        return getattr(self.__wrapped__, name)
+        if name == self._self_key_name:
+            return self._self_key
+        if not name.startswith('_') and isinstance(self.__wrapped__, type):
+            self.__wrapped__ = self._self_model.get(self._self_key)
+        return super(RelationshipResult, self).__getattr__(name)
 
     def __eq__(self, other):
-        return isinstance(other, self._model) and self._key == getattr(other, self._key_name)
+        return isinstance(other, self._self_model) and self._self_key == getattr(other, self._self_key_name)
 
     def __ne__(self, other):
         return not self.__eq__(other)
