@@ -19,15 +19,10 @@ from .utils import get_key_name
 
 def get_model_fields(model):
     attributes = dict()
-    for item in dir(model):
-        try:
-            item_cls = getattr(getattr(model, item), "__class__", None)
-        except AttributeError:
-            continue
-        if item_cls is None:
-            continue
-        if issubclass(item_cls, (Attribute,)):
-            attributes[item] = getattr(model, item)
+    for attr_name in vars(model):
+        attr = getattr(model, attr_name)
+        if isinstance(attr, Attribute):
+            attributes[attr_name] = attr
 
     return OrderedDict(sorted(attributes.items(), key=lambda t: t[0]))
 
