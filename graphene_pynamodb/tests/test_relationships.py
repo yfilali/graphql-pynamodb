@@ -1,4 +1,5 @@
 import graphene
+import pytest
 from graphene import Node
 from mock import MagicMock
 from wrapt import ObjectProxy
@@ -102,6 +103,13 @@ def test_relationships_should_resolve_well():
     assert not result.errors
     assert result.data['reporter'] == expected['reporter']
     assert all(item in result.data['articles'] for item in expected['articles'])
+
+
+def test_relationships_should_raiseerror():
+    with pytest.raises(TypeError):
+        OneToOne(object)
+    with pytest.raises(TypeError):
+        OneToMany(object)
 
 
 def test_onetoone_should_serialize_well():

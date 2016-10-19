@@ -75,13 +75,10 @@ class OneToOne(Relationship):
         if isinstance(getattr(self.model, self.hash_key_name), NumberAttribute):
             hash_key = int(hash_key)
 
-        try:
-            if self._lazy:
-                return RelationshipResult(self.hash_key_name, hash_key, self.model)
-            else:
-                return self.model.get(hash_key)
-        except self.model.DoesNotExist:
-            return None
+        if self._lazy:
+            return RelationshipResult(self.hash_key_name, hash_key, self.model)
+        else:
+            return self.model.get(hash_key)
 
 
 class OneToMany(Relationship):
