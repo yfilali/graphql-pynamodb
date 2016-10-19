@@ -159,3 +159,38 @@ def test_relationships_should_compare_well():
     rel1 = RelationshipResult('id', 1, Article)
     assert rel1 == article1
     assert rel1 != article2
+
+
+def test_onetoone_should_handle_not_being_lazy():
+    MockArticle = ObjectProxy(Article)
+    MockArticle.get = MagicMock(return_value=Article.get(1))
+    relationship = OneToOne(MockArticle, lazy=False)
+    article = relationship.deserialize(1)
+    MockArticle.get.assert_called_once_with(1)
+
+    # Access fields that would normally trigger laxy loading
+    assert article.id == 1
+    assert article.headline == "Hi!"
+    assert article.reporter.id == 1
+    assert article.headline == "Hi!"
+    # make sure our call count is still 1
+    MockArticle.get.assert_called_once_with(1)
+
+
+def test_onetomany_should_handle_not_being_lazy():
+    MockArticle = ObjectProxy(Article)
+    MockArticle.get = MagicMock()
+    MockArticle.batch_get = MagicMock(return_value=Article.batch_get([1, 3]))
+    relationship = OneToMany(MockArticle, lazy=False)
+    articles = list(relationship.deserialize([1, 3]))
+    MockArticle.batch_get.assert_called_once_with([1, 3])
+    MockArticle.get.assert_not_called()
+
+    # Access fields that would normally trigger laxy loading
+    assert articles[0].id == 1
+    assert articles[0].id == 1
+    assert articles[0].headline == "Hi!"
+    assert articles[1].headline == "My Article"
+    # make sure our call count is still 1
+    MockArticle.batch_get.assert_called_once_with([1, 3])
+    MockArticle.get.assert_not_called()

@@ -94,10 +94,7 @@ class OneToMany(Relationship):
         if isinstance(getattr(self.model, self.hash_key_name), NumberAttribute):
             hash_keys = map(int, hash_keys)
 
-        try:
-            if self._lazy:
-                return [RelationshipResult(self.hash_key_name, hash_key, self.model) for hash_key in hash_keys]
-            else:
-                return self.model.get_batch(hash_keys)
-        except self.model.DoesNotExist:
-            return None
+        if self._lazy:
+            return [RelationshipResult(self.hash_key_name, hash_key, self.model) for hash_key in hash_keys]
+        else:
+            return self.model.batch_get(hash_keys)
