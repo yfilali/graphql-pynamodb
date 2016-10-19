@@ -4,8 +4,8 @@ to learn how to upgrade to Graphene ``1.0``.
 
 --------------
 
-|Graphene Logo| Graphene-PynamoDB |Build Status| |Coverage Status|
-==================================================================
+|Graphene Logo| Graphene-PynamoDB |Build Status| |Coverage Status| |PyPI version|
+=================================================================================
 
 A `PynamoDB <http://pynamodb.readthedocs.io/>`__ integration for
 `Graphene <http://graphene-python.org/>`__.
@@ -129,3 +129,5 @@ After developing, the full test suite can be evaluated by running:
    :target: https://travis-ci.org/yfilali/graphql-pynamodb
 .. |Coverage Status| image:: https://coveralls.io/repos/github/yfilali/graphql-pynamodb/badge.svg?branch=master
    :target: https://coveralls.io/github/yfilali/graphql-pynamodb?branch=master
+.. |PyPI version| image:: https://badge.fury.io/py/graphene-pynamodb.svg
+   :target: https://badge.fury.io/py/graphene-pynamodb

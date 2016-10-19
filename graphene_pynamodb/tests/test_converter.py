@@ -8,7 +8,9 @@ from pynamodb.attributes import (BinaryAttribute, BinarySetAttribute,
                                  NumberAttribute, NumberSetAttribute,
                                  UnicodeAttribute, UnicodeSetAttribute,
                                  UTCDateTimeAttribute)
+from pynamodb.models import Model
 
+from graphene_pynamodb.relationships import OneToMany
 from .models import Article, Reporter
 from .. import PynamoConnectionField
 from .. import PynamoObjectType
@@ -87,6 +89,22 @@ def test_should_onetomany_convert_nonnode_field():
     graphene_type = dynamic_field.get_type()
     assert isinstance(graphene_type, graphene.Field)
     assert graphene_type.type == graphene.List(A)
+
+
+def test_should_onetomany_none_for_unknown_type():
+    class ModelA(Model):
+        pass
+
+    class ModelB(Model):
+        a = OneToMany(ModelA)
+
+    class A(PynamoObjectType):
+        class Meta:
+            model = ModelB
+
+    dynamic_field = convert_pynamo_attribute(ModelB.a, ModelB.a, A._meta.registry)
+    assert isinstance(dynamic_field, Dynamic)
+    assert dynamic_field.get_type() is None
 
 
 def test_should_onetomany_convert_field():

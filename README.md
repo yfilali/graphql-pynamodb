@@ -3,7 +3,7 @@ to learn how to upgrade to Graphene `1.0`.
 
 ---
 
-# ![Graphene Logo](http://graphene-python.org/favicon.png) Graphene-PynamoDB [![Build Status](https://travis-ci.org/yfilali/graphql-pynamodb.svg?branch=master)](https://travis-ci.org/yfilali/graphql-pynamodb) [![Coverage Status](https://coveralls.io/repos/github/yfilali/graphql-pynamodb/badge.svg?branch=master)](https://coveralls.io/github/yfilali/graphql-pynamodb?branch=master)
+# ![Graphene Logo](http://graphene-python.org/favicon.png) Graphene-PynamoDB [![Build Status](https://travis-ci.org/yfilali/graphql-pynamodb.svg?branch=master)](https://travis-ci.org/yfilali/graphql-pynamodb) [![Coverage Status](https://coveralls.io/repos/github/yfilali/graphql-pynamodb/badge.svg?branch=master)](https://coveralls.io/github/yfilali/graphql-pynamodb?branch=master) [![PyPI version](https://badge.fury.io/py/graphene-pynamodb.svg)](https://badge.fury.io/py/graphene-pynamodb)
 
 
 A [PynamoDB](http://pynamodb.readthedocs.io/) integration for [Graphene](http://graphene-python.org/).

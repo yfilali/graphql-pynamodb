@@ -102,8 +102,6 @@ class PynamoObjectTypeMeta(ObjectTypeMeta):
 class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
     @classmethod
     def is_type_of(cls, root, context, info):
-        if isinstance(root, cls):
-            return True
         if isinstance(root, RelationshipResult) and root.__wrapped__ == cls._meta.model:
             return True
         return isinstance(root, cls._meta.model)
