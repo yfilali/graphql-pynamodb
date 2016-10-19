@@ -22,7 +22,7 @@ def setup_fixtures():
         article2.save()
     if not Editor.exists():
         Editor.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
-        editor = Editor(id=1, name="John")
+        editor = Editor(id="1", name="John")
         editor.save()
 
 

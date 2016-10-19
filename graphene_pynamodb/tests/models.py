@@ -18,7 +18,7 @@ class Editor(Model):
         host = DB_HOST
         region = DB_REGION
 
-    id = NumberAttribute(hash_key=True)
+    id = UnicodeAttribute(hash_key=True)
     name = UnicodeAttribute()
 
 
