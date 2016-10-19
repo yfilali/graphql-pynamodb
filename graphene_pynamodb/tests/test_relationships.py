@@ -185,12 +185,17 @@ def test_onetomany_should_handle_not_being_lazy():
     articles = list(relationship.deserialize([1, 3]))
     MockArticle.batch_get.assert_called_once_with([1, 3])
     MockArticle.get.assert_not_called()
-
     # Access fields that would normally trigger laxy loading
-    assert articles[0].id == 1
-    assert articles[0].id == 1
-    assert articles[0].headline == "Hi!"
-    assert articles[1].headline == "My Article"
+    # order is not guaranteed in batch_get
+    if articles[0].id == 1:
+        assert articles[0].headline == "Hi!"
+        assert articles[1].id == 3
+        assert articles[1].headline == "My Article"
+    else:
+        assert articles[0].id == 3
+        assert articles[0].headline == "My Article"
+        assert articles[1].id == 1
+        assert articles[1].headline == "Hi!"
     # make sure our call count is still 1
     MockArticle.batch_get.assert_called_once_with([1, 3])
     MockArticle.get.assert_not_called()
