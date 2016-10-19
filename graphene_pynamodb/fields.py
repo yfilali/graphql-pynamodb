@@ -38,12 +38,8 @@ class PynamoConnectionField(relay.ConnectionField):
         connection_type = connection
         pageinfo_type = PageInfo
 
-        # get the results from the attribute requested (relationship)
-        if not iterable and root and hasattr(root, info.field_name):
-            iterable = getattr(root, info.field_name)
-
-        # get a full scan query since we have no root
-        if not iterable and not root:
+        # get a full scan query since we have no resolved iterable from relationship or resolver function
+        if not iterable:
             query = cls.get_query(model, context, info, args)
             iterable = query()
             if first or last or after or before:
