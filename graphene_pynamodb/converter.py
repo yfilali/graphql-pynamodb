@@ -40,8 +40,6 @@ def convert_relationship_to_dynamic(type, attribute, registry=None):
                 return PynamoConnectionField(_type)
             return Field(List(_type))
 
-        return None
-
     return Dynamic(dynamic_type)
 
 

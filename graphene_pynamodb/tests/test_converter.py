@@ -9,8 +9,9 @@ from pynamodb.attributes import (BinaryAttribute, BinarySetAttribute,
                                  UnicodeAttribute, UnicodeSetAttribute,
                                  UTCDateTimeAttribute)
 
-from graphene_pynamodb import PynamoObjectType
-from graphene_pynamodb.tests.models import Article, Reporter
+from .models import Article, Reporter
+from .. import PynamoConnectionField
+from .. import PynamoObjectType
 from ..converter import convert_pynamo_attribute
 
 
@@ -63,71 +64,6 @@ def test_should_jsontype_convert_jsonstring():
     assert_attribute_conversion(JSONAttribute(), JSONString)
 
 
-# TODO keeping turned off until I implement some sort of relationships on top of PynamoDB
-# PS: (DynamoDB is not relational)
-# def test_should_manytomany_convert_connectionorlist():
-#     registry = Registry()
-#     dynamic_field = convert_relationship(Reporter.pets.property, registry)
-#     assert isinstance(dynamic_field, graphene.Dynamic)
-#     assert not dynamic_field.get_type()
-
-#
-# def test_should_manytomany_convert_connectionorlist_list():
-#     class A(PynamoObjectType):
-#         class Meta:
-#             model = Pet
-#
-#     dynamic_field = convert_relationship(Reporter.pets.property, A._meta.registry)
-#     assert isinstance(dynamic_field, graphene.Dynamic)
-#     graphene_type = dynamic_field.get_type()
-#     assert isinstance(graphene_type, graphene.Field)
-#     assert isinstance(graphene_type.type, graphene.List)
-#     assert graphene_type.type.of_type == A
-
-
-# def test_should_manytomany_convert_connectionorlist_connection():
-#     class A(PynamoObjectType):
-#         class Meta:
-#             model = Pet
-#             interfaces = (Node,)
-#
-#     dynamic_field = convert_relationship(Reporter.pets.property, A._meta.registry)
-#     assert isinstance(dynamic_field, graphene.Dynamic)
-#     assert isinstance(dynamic_field.get_type(), PynamoConnectionField)
-#
-#
-# def test_should_manytoone_convert_connectionorlist():
-#     registry = Registry()
-#     dynamic_field = convert_relationship(Article.reporter.property, registry)
-#     assert isinstance(dynamic_field, graphene.Dynamic)
-#     assert not dynamic_field.get_type()
-#
-#
-# def test_should_manytoone_convert_connectionorlist_list():
-#     class A(PynamoObjectType):
-#         class Meta:
-#             model = Reporter
-#
-#     dynamic_field = convert_relationship(Article.reporter.property, A._meta.registry)
-#     assert isinstance(dynamic_field, graphene.Dynamic)
-#     graphene_type = dynamic_field.get_type()
-#     assert isinstance(graphene_type, graphene.Field)
-#     assert graphene_type.type == A
-#
-#
-# def test_should_manytoone_convert_connectionorlist_connection():
-#     class A(PynamoObjectType):
-#         class Meta:
-#             model = Reporter
-#             interfaces = (Node,)
-#
-#     dynamic_field = convert_relationship(Article.reporter.property, A._meta.registry)
-#     assert isinstance(dynamic_field, graphene.Dynamic)
-#     graphene_type = dynamic_field.get_type()
-#     assert isinstance(graphene_type, graphene.Field)
-#     assert graphene_type.type == A
-#
-#
 def test_should_onetoone_convert_field():
     class A(PynamoObjectType):
         class Meta:
@@ -141,14 +77,25 @@ def test_should_onetoone_convert_field():
     assert graphene_type.type == A
 
 
+def test_should_onetomany_convert_nonnode_field():
+    class A(PynamoObjectType):
+        class Meta:
+            model = Article
+
+    dynamic_field = convert_pynamo_attribute(Reporter.articles, Reporter.articles, A._meta.registry)
+    assert isinstance(dynamic_field, Dynamic)
+    graphene_type = dynamic_field.get_type()
+    assert isinstance(graphene_type, graphene.Field)
+    assert graphene_type.type == graphene.List(A)
+
+
 def test_should_onetomany_convert_field():
     class A(PynamoObjectType):
         class Meta:
             model = Article
             interfaces = (Node,)
 
-    dynamic_field = convert_pynamo_attribute(Reporter.articles, Reporter.favorite_article, A._meta.registry)
+    dynamic_field = convert_pynamo_attribute(Reporter.articles, Reporter.articles, A._meta.registry)
     assert isinstance(dynamic_field, Dynamic)
     graphene_type = dynamic_field.get_type()
-    assert isinstance(graphene_type, graphene.Field)
-    assert graphene_type.type == A
+    assert isinstance(graphene_type, PynamoConnectionField)
