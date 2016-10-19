@@ -183,7 +183,7 @@ def test_onetomany_should_handle_not_being_lazy():
     MockArticle.batch_get = MagicMock(return_value=Article.batch_get([1, 3]))
     relationship = OneToMany(MockArticle, lazy=False)
     articles = list(relationship.deserialize([1, 3]))
-    MockArticle.batch_get.assert_called_once_with([1, 3])
+    MockArticle.batch_get.assert_called_once()
     MockArticle.get.assert_not_called()
     # Access fields that would normally trigger laxy loading
     # order is not guaranteed in batch_get
@@ -197,5 +197,5 @@ def test_onetomany_should_handle_not_being_lazy():
         assert articles[1].id == 1
         assert articles[1].headline == "Hi!"
     # make sure our call count is still 1
-    MockArticle.batch_get.assert_called_once_with([1, 3])
+    MockArticle.batch_get.assert_called_once()
     MockArticle.get.assert_not_called()
