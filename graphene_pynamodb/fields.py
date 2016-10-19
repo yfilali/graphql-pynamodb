@@ -47,8 +47,9 @@ class PynamoConnectionField(relay.ConnectionField):
             query = cls.get_query(model, context, info, args)
             iterable = query()
             if first or last or after or before:
-                raise UserWarning("DynamoDB scan operations have no predictable sort. Arguments first, last, after " +
-                                  "and before will have unpredictable results")
+                raise NotImplementedError(
+                    "DynamoDB scan operations have no predictable sort. Arguments first, last, after " +
+                    "and before will have unpredictable results")
 
         iterable = iterable if isinstance(iterable, list) else list(iterable)
 

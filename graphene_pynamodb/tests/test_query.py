@@ -489,3 +489,32 @@ def test_should_support_after():
     result = schema.execute(query)
     assert not result.errors
     assert result.data["reporter"]["articles"]["edges"] == expected["reporter"]["articles"]["edges"]
+
+
+def test_root_scan_should_warn_on_params():
+    class ArticleNode(PynamoObjectType):
+        class Meta:
+            model = Article
+            interfaces = (Node,)
+
+    class Query(graphene.ObjectType):
+        node = Node.Field()
+        articles = PynamoConnectionField(ArticleNode)
+
+    query = '''
+        query ArticlesQuery {
+          articles(after: "1") {
+            edges {
+              node {
+                id
+                headline
+              }
+            }
+          }
+        }
+    '''
+
+    schema = graphene.Schema(query=Query)
+    result = schema.execute(query)
+    assert result.errors
+    assert isinstance(result.errors[0].original_error, NotImplementedError)
