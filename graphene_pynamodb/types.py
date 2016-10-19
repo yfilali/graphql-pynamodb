@@ -9,7 +9,6 @@ from graphene.types.options import Options
 from graphene.types.utils import merge, yank_fields_from_attrs
 from graphene.utils.is_base_type import is_base_type
 from pynamodb.attributes import Attribute, NumberAttribute
-from pynamodb.exceptions import DoesNotExist
 from pynamodb.models import Model
 
 from .converter import convert_pynamo_attribute
@@ -116,15 +115,10 @@ class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
 
     @classmethod
     def get_node(cls, id, context, info):
-        try:
-            if isinstance(getattr(cls._meta.model, get_key_name(cls._meta.model)), NumberAttribute):
-                return cls._meta.model.get(int(id))
-            else:
-                return cls._meta.model.get(id)
-        except AttributeError:
+        if isinstance(getattr(cls._meta.model, get_key_name(cls._meta.model)), NumberAttribute):
+            return cls._meta.model.get(int(id))
+        else:
             return cls._meta.model.get(id)
-        except DoesNotExist:
-            return None
 
     def resolve_id(self, args, context, info):
         graphene_type = info.parent_type.graphene_type
