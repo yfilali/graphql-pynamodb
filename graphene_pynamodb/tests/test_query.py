@@ -22,7 +22,7 @@ def setup_fixtures():
         article2.save()
     if not Editor.exists():
         Editor.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
-        editor = Editor(id="1", name="John")
+        editor = Editor(id='1', name='John')
         editor.save()
 
 
@@ -175,10 +175,10 @@ def test_should_node():
     schema = graphene.Schema(query=Query)
     result = schema.execute(query)
     assert not result.errors
-    assert all(item in expected["reporter"] for item in result.data["reporter"])
-    assert all(item in expected["reporter"]["articles"] for item in result.data["reporter"]["articles"])
-    assert result.data["myArticle"] == expected["myArticle"]
-    assert all(item in result.data["allArticles"] for item in expected['allArticles'])
+    assert all(item in expected['reporter'] for item in result.data['reporter'])
+    assert all(item in expected['reporter']['articles'] for item in result.data['reporter']['articles'])
+    assert result.data['myArticle'] == expected['myArticle']
+    assert all(item in result.data['allArticles'] for item in expected['allArticles'])
 
 
 def test_should_custom_identifier():
@@ -225,7 +225,7 @@ def test_should_custom_identifier():
     schema = graphene.Schema(query=Query)
     result = schema.execute(query)
     assert not result.errors
-    assert result.data["allEditors"] == expected["allEditors"]
+    assert result.data['allEditors'] == expected['allEditors']
 
 
 def test_should_mutate_well():
@@ -305,8 +305,8 @@ def test_should_mutate_well():
     schema = graphene.Schema(query=Query, mutation=Mutation)
     result = schema.execute(query)
     assert not result.errors
-    assert result.data["createArticle"]["ok"] == expected["createArticle"]["ok"]
-    assert all(item in result.data["createArticle"]["article"] for item in expected["createArticle"]["article"])
+    assert result.data['createArticle']['ok'] == expected['createArticle']['ok']
+    assert all(item in result.data['createArticle']['article'] for item in expected['createArticle']['article'])
 
 
 def test_should_support_first():
@@ -373,8 +373,8 @@ def test_should_support_first():
     schema = graphene.Schema(query=Query)
     result = schema.execute(query)
     assert not result.errors
-    assert result.data["reporter"]["articles"]["edges"] == expected["reporter"]["articles"]["edges"]
-    assert result.data["reporter"]["articles"]["pageInfo"] == expected["reporter"]["articles"]["pageInfo"]
+    assert result.data['reporter']['articles']['edges'] == expected['reporter']['articles']['edges']
+    assert result.data['reporter']['articles']['pageInfo'] == expected['reporter']['articles']['pageInfo']
 
 
 def test_should_support_last():
@@ -429,7 +429,7 @@ def test_should_support_last():
     schema = graphene.Schema(query=Query)
     result = schema.execute(query)
     assert not result.errors
-    assert result.data["reporter"]["articles"]["edges"] == expected["reporter"]["articles"]["edges"]
+    assert result.data['reporter']['articles']['edges'] == expected['reporter']['articles']['edges']
 
 
 def test_should_support_after():
@@ -484,7 +484,7 @@ def test_should_support_after():
     schema = graphene.Schema(query=Query)
     result = schema.execute(query)
     assert not result.errors
-    assert result.data["reporter"]["articles"]["edges"] == expected["reporter"]["articles"]["edges"]
+    assert result.data['reporter']['articles']['edges'] == expected['reporter']['articles']['edges']
 
 
 def test_root_scan_should_warn_on_params():
@@ -514,3 +514,46 @@ def test_root_scan_should_warn_on_params():
     result = schema.execute(query)
     assert result.errors
     assert isinstance(result.errors[0].original_error, NotImplementedError)
+
+
+def test_root_scan_should_fastforward_on_after():
+    class ArticleNode(PynamoObjectType):
+        class Meta:
+            model = Article
+            interfaces = (Node,)
+
+    class Query(graphene.ObjectType):
+        node = Node.Field()
+        articles = PynamoConnectionField(ArticleNode)
+
+        def resolve_articles(self, *args, **kwargs):
+            return [
+                Article(1, headline='One'),
+                Article(2, headline='Two'),
+                Article(3, headline='Three'),
+                Article(4, headline='Four')
+            ]
+
+    query = '''
+        query ArticlesQuery {
+          articles(after: "2", first: 1) {
+            edges {
+              node {
+                id
+                headline
+              }
+            }
+          }
+        }
+    '''
+    expected = [{
+        'node': {
+            'headline': 'Three',
+            'id': 'QXJ0aWNsZU5vZGU6Mw=='
+        }
+    }]
+
+    schema = graphene.Schema(query=Query)
+    result = schema.execute(query)
+    assert not result.errors
+    assert result.data['articles']['edges'] == expected
