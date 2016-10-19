@@ -309,6 +309,69 @@ def test_should_mutate_well():
     assert all(item in result.data['createArticle']['article'] for item in expected['createArticle']['article'])
 
 
+def test_should_return_empty_cursors_on_empty():
+    class ArticleNode(PynamoObjectType):
+        class Meta:
+            model = Article
+            interfaces = (Node,)
+
+    class ReporterNode(PynamoObjectType):
+        class Meta:
+            model = Reporter
+            interfaces = (Node,)
+
+    class Query(graphene.ObjectType):
+        node = Node.Field()
+        reporter = graphene.Field(ReporterNode)
+
+        def resolve_reporter(self, *args, **kwargs):
+            return Reporter.get(2)
+
+    query = '''
+        query ReporterQuery {
+          reporter {
+            id,
+            firstName,
+            articles(first: 1) {
+              edges {
+                node {
+                  id
+                  headline
+                }
+              }
+              pageInfo {
+                hasNextPage
+                hasPreviousPage
+                startCursor
+                endCursor
+              }
+            }
+            lastName,
+            email
+          }
+        }
+    '''
+    expected = {
+        'reporter': {
+            'articles': {
+                'edges': [],
+                'pageInfo': {
+                    'hasNextPage': False,
+                    'hasPreviousPage': False,
+                    'startCursor': '',
+                    'endCursor': ''
+                }
+            }
+        }
+    }
+
+    schema = graphene.Schema(query=Query)
+    result = schema.execute(query)
+    assert not result.errors
+    assert result.data['reporter']['articles']['edges'] == expected['reporter']['articles']['edges']
+    assert result.data['reporter']['articles']['pageInfo'] == expected['reporter']['articles']['pageInfo']
+
+
 def test_should_support_first():
     class ArticleNode(PynamoObjectType):
         class Meta:

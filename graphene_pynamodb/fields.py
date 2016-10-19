@@ -39,7 +39,7 @@ class PynamoConnectionField(relay.ConnectionField):
         pageinfo_type = PageInfo
 
         # get a full scan query since we have no resolved iterable from relationship or resolver function
-        if not iterable:
+        if not iterable and not root:
             query = cls.get_query(model, context, info, args)
             iterable = query()
             if first or last or after or before:
@@ -47,7 +47,7 @@ class PynamoConnectionField(relay.ConnectionField):
                     "DynamoDB scan operations have no predictable sort. Arguments first, last, after " +
                     "and before will have unpredictable results")
 
-        iterable = iterable if isinstance(iterable, list) else list(iterable)
+        iterable = iterable if isinstance(iterable, list) else list([])
 
         if last:
             iterable = iterable[-last:]
