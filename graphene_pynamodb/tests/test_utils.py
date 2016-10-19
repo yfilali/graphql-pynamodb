@@ -7,7 +7,7 @@ from ..utils import get_key_name
 
 def test_getkeyname_should_raiseerror():
     with pytest.raises(TypeError):
-        assert get_key_name("This is not a model") == False
+        get_key_name(object)
 
 
 def test_getkeyname_should_workonstrings():
