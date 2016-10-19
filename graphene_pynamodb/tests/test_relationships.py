@@ -169,6 +169,11 @@ def test_relationships_should_compare_well():
     assert rel1 != article2
 
 
+def test_result_should_check_type():
+    with pytest.raises(TypeError):
+        RelationshipResult('id', 1, PynamoObjectType)
+
+
 def test_onetoone_should_handle_not_being_lazy():
     MockArticle = ObjectProxy(Article)
     MockArticle.get = MagicMock(return_value=Article.get(1))

@@ -8,7 +8,7 @@ from wrapt import ObjectProxy
 class RelationshipResult(ObjectProxy):
     def __init__(self, key_name, key, obj):
         if isinstance(obj, type) and not issubclass(obj, Model):
-            raise Exception("Invalid class passed to RelationshipResult, expected a Model class, got %s" % type(obj))
+            raise TypeError("Invalid class passed to RelationshipResult, expected a Model class, got %s" % type(obj))
         super(RelationshipResult, self).__init__(obj)
         self._self_key = key
         self._self_key_name = key_name
