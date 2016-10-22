@@ -43,6 +43,9 @@ class RelationshipResultList(list):
 
         return RelationshipResult(self._hash_key_name, self._keys[item], self._model)
 
+    def __getslice__(self, i, j):
+        return RelationshipResultList(self._hash_key_name, self._model, self._keys[i:j])
+
     def __iter__(self):
         for key in self._keys:
             yield RelationshipResult(self._hash_key_name, key, self._model)
