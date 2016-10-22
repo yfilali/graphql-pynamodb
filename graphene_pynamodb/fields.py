@@ -4,6 +4,8 @@ from functools import partial
 
 from graphene import relay
 from graphene.relay.connection import PageInfo
+from graphql_relay import from_global_id
+from graphql_relay import to_global_id
 from graphql_relay.connection.connectiontypes import Edge
 
 from graphene_pynamodb.utils import get_key_name
@@ -30,9 +32,9 @@ class PynamoConnectionField(relay.ConnectionField):
         iterable = resolver(root, args, context, info)
 
         first = args.get('first')
-        after = args.get('after')
+        (_, after) = from_global_id(args.get('after')) if args.get('after') else (None, None)
         last = args.get('last')
-        before = args.get('before')
+        (_, before) = from_global_id(args.get('before')) if args.get('before') else (None, None)
         has_previous_page = bool(after)
         page_size = first if first else last if last else None
         connection_type = connection
@@ -51,7 +53,7 @@ class PynamoConnectionField(relay.ConnectionField):
         if last:
             iterable = iterable[-last:]
 
-        (has_next, edges) = cls.get_edges_from_iterable(iterable, model, edge_type=connection.Edge, after=after,
+        (has_next, edges) = cls.get_edges_from_iterable(iterable, model, info, edge_type=connection.Edge, after=after,
                                                         page_size=page_size)
 
         key_name = get_key_name(model)
@@ -77,14 +79,15 @@ class PynamoConnectionField(relay.ConnectionField):
         return partial(self.connection_resolver, parent_resolver, self.type, self.model)
 
     @classmethod
-    def get_edges_from_iterable(cls, iterable, model, edge_type=Edge, after=None, page_size=None):
+    def get_edges_from_iterable(cls, iterable, model, info, edge_type=Edge, after=None, page_size=None):
         edges = []
         count = 0
         has_next = False
 
         for entity in iterable:
+            id = str(getattr(entity, get_key_name(model)))
             if after:
-                if after != str(getattr(entity, get_key_name(model))):
+                if after != id:
                     continue
                 else:
                     after = False
@@ -92,7 +95,7 @@ class PynamoConnectionField(relay.ConnectionField):
             if page_size and count >= page_size:
                 has_next = True
                 break
-            edges.append(edge_type(node=entity, cursor=entity))
+            edges.append(edge_type(node=entity, cursor=to_global_id(model.__name__, id)))
             count += 1
 
         return [has_next, edges]

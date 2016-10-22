@@ -518,7 +518,7 @@ def test_should_support_after():
           reporter {
             id,
             firstName,
-            articles(after: "1") {
+            articles(after: "QXJ0aWNsZU5vZGU6MQ==") {
               edges {
                 node {
                   id
@@ -562,7 +562,7 @@ def test_root_scan_should_warn_on_params():
 
     query = '''
         query ArticlesQuery {
-          articles(after: "1") {
+          articles(after: "QXJ0aWNsZU5vZGU6MQ==") {
             edges {
               node {
                 id
@@ -599,7 +599,7 @@ def test_root_scan_should_fastforward_on_after():
 
     query = '''
         query ArticlesQuery {
-          articles(after: "2", first: 1) {
+          articles(after: "QXJ0aWNsZU5vZGU6Mq==", first: 1) {
             edges {
               node {
                 id
