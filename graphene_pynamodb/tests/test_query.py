@@ -7,21 +7,22 @@ from ..types import PynamoObjectType
 
 
 def setup_fixtures():
-    if not Reporter.exists():
-        Reporter.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
+    dirty = False
+    for model in [Editor, Article, Reporter]:
+        if not model.exists():
+            dirty = True
+            model.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
+
+    if dirty:
         reporter = Reporter(id=1, first_name='ABA', last_name='X')
         reporter.articles = [Article(1), Article(3)]
         reporter.save()
         reporter2 = Reporter(id=2, first_name='ABO', last_name='Y')
         reporter2.save()
-    if not Article.exists():
-        Article.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
         article1 = Article(id=1, headline='Hi!', reporter=Reporter(1))
         article1.save()
         article2 = Article(id=3, headline='My Article', reporter=Reporter(1))
         article2.save()
-    if not Editor.exists():
-        Editor.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
         editor = Editor(id='1', name='John')
         editor.save()
 

@@ -4,6 +4,8 @@ from pynamodb.models import Model
 from six import string_types
 from wrapt import ObjectProxy
 
+from graphene_pynamodb.utils import get_key_name
+
 
 class RelationshipResult(ObjectProxy):
     def __init__(self, key_name, key, obj):
@@ -28,6 +30,24 @@ class RelationshipResult(ObjectProxy):
         return not self.__eq__(other)
 
 
+class RelationshipResultList(list):
+    def __init__(self, hash_key_name, model, keys):
+        self._hash_key_name = hash_key_name
+        self._model = model
+        self._keys = keys
+        super(RelationshipResultList, self).__init__(keys)
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            return RelationshipResultList(self._hash_key_name, self._model, self._keys[item])
+
+        return RelationshipResult(self._hash_key_name, self._keys[item], self._model)
+
+    def __iter__(self):
+        for key in self._keys:
+            yield RelationshipResult(self._hash_key_name, key, self._model)
+
+
 class Relationship(Attribute):
     _models = None
 
@@ -42,14 +62,20 @@ class Relationship(Attribute):
             Relationship._models = Relationship.sub_classes(Model)
         return next((model for model in Relationship._models if model.__name__ == model_name), None)
 
-    def __init__(self, model, hash_key="id", lazy=True, **args):
+    def __init__(self, model, lazy=True, **args):
         if not isinstance(model, string_types) and not issubclass(model, Model):
             raise TypeError("Expected PynamoDB Model argument, got: %s " % model.__class__.__name__)
 
         Attribute.__init__(self, **args)
         self._model = model
-        self.hash_key_name = hash_key
         self._lazy = lazy
+        self._hash_key_name = None
+
+    @property
+    def hash_key_name(self):
+        if not self._hash_key_name:
+            self._hash_key_name = get_key_name(self.model)
+        return self._hash_key_name
 
     @property
     def model(self):
@@ -83,9 +109,9 @@ class OneToMany(Relationship):
 
     def deserialize(self, hash_keys):
         if isinstance(getattr(self.model, self.hash_key_name), NumberAttribute):
-            hash_keys = map(int, hash_keys)
+            hash_keys = [int(hash_key) for hash_key in hash_keys]
 
         if self._lazy:
-            return [RelationshipResult(self.hash_key_name, hash_key, self.model) for hash_key in hash_keys]
+            return RelationshipResultList(self.hash_key_name, self.model, hash_keys)
         else:
             return self.model.batch_get(hash_keys)
