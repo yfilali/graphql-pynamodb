@@ -8,6 +8,7 @@ from graphql_relay import from_global_id
 from graphql_relay import to_global_id
 from graphql_relay.connection.connectiontypes import Edge
 
+from graphene_pynamodb.relationships import RelationshipResultList
 from graphene_pynamodb.utils import get_key_name
 
 
@@ -80,22 +81,28 @@ class PynamoConnectionField(relay.ConnectionField):
 
     @classmethod
     def get_edges_from_iterable(cls, iterable, model, info, edge_type=Edge, after=None, page_size=None):
-        edges = []
-        count = 0
         has_next = False
 
-        for entity in iterable:
-            id = str(getattr(entity, get_key_name(model)))
-            if after:
-                if after != id:
-                    continue
-                else:
-                    after = False
-                    continue
-            if page_size and count >= page_size:
-                has_next = True
-                break
-            edges.append(edge_type(node=entity, cursor=to_global_id(model.__name__, id)))
-            count += 1
+        key_name = get_key_name(model)
+        after_index = 0
+        if after:
+            after_index = next((i for i, item in enumerate(iterable) if str(getattr(item, key_name)) == after), None)
+            if after_index is None:
+                return None
+            else:
+                after_index += 1
+
+        if page_size:
+            has_next = len(iterable) - after_index > page_size
+            iterable = iterable[after_index:after_index + page_size]
+        else:
+            iterable = iterable[after_index:]
+
+        # trigger a batch get to speed up query instead of relying on lazy individual gets
+        if isinstance(iterable, RelationshipResultList):
+            iterable = iterable.resolve()
+
+        edges = [edge_type(node=entity, cursor=to_global_id(model.__name__, getattr(entity, key_name)))
+                 for entity in iterable]
 
         return [has_next, edges]

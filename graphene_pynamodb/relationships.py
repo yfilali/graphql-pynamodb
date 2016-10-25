@@ -1,5 +1,5 @@
 from pynamodb.attributes import Attribute, NumberAttribute
-from pynamodb.constants import STRING, STRING_SET
+from pynamodb.constants import STRING, ATTR_TYPE_MAP, NUMBER_SHORT
 from pynamodb.models import Model
 from six import string_types
 from wrapt import ObjectProxy
@@ -49,6 +49,10 @@ class RelationshipResultList(list):
     def __iter__(self):
         for key in self._keys:
             yield RelationshipResult(self._hash_key_name, key, self._model)
+
+    def resolve(self):
+        models = dict((getattr(entity, self._hash_key_name), entity) for entity in self._model.batch_get(self._keys))
+        return [models[key] for key in self._keys]
 
 
 class Relationship(Attribute):
@@ -105,16 +109,34 @@ class OneToOne(Relationship):
 
 
 class OneToMany(Relationship):
-    attr_type = STRING_SET
+    attr_type = 'L'
 
     def serialize(self, models):
-        return [str(getattr(model, self.hash_key_name)) for model in models]
+        key_type = ATTR_TYPE_MAP[getattr(self.model, self.hash_key_name).attr_type]
+        return [{key_type: str(getattr(model, self.hash_key_name))} for model in models]
 
     def deserialize(self, hash_keys):
-        if isinstance(getattr(self.model, self.hash_key_name), NumberAttribute):
-            hash_keys = [int(hash_key) for hash_key in hash_keys]
+        if hash_keys and isinstance(hash_keys[0], dict):
+            key_type = list(hash_keys[0].keys())[0]
+            if key_type == NUMBER_SHORT:
+                hash_keys = [int(hash_key[key_type]) for hash_key in hash_keys]
+            else:
+                hash_keys = [hash_key[key_type] for hash_key in hash_keys]
+        else:
+            if isinstance(getattr(self.model, self.hash_key_name), NumberAttribute):
+                hash_keys = [hash_key for hash_key in hash_keys]
 
         if self._lazy:
             return RelationshipResultList(self.hash_key_name, self.model, hash_keys)
         else:
             return self.model.batch_get(hash_keys)
+
+    def get_value(self, value):
+        # we need this for legacy compatibility.
+        # deserialize previous string set implementation
+        if isinstance(value, dict) and "SS" in value:
+            return value["SS"]
+        return value["L"]
+
+
+ATTR_TYPE_MAP["L"] = "L"

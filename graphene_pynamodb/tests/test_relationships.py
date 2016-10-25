@@ -130,7 +130,7 @@ def test_onetoone_should_deserialize_well():
 def test_onetomany_should_serialize_well():
     fixtures = setup_fixtures()
     relationship = OneToMany(Article)
-    assert relationship.serialize([fixtures["article1"], fixtures["article2"]]) == ['1', '2']
+    assert relationship.serialize([fixtures["article1"], fixtures["article2"]]) == [{'N': '1'}, {'N': '2'}]
 
 
 def test_onetomany_should_deserialize_well():

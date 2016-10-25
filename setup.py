@@ -34,7 +34,7 @@ setup(
     install_requires=[
         'six>=1.10.0',
         'graphene>=1.0',
-        'pynamodb>=1.5.0',
+        'pynamodb>=1.6.0',
         'singledispatch>=3.4.0.3',
         'wrapt>=1.10.8'
     ],
