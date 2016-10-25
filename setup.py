@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='graphene-pynamodb',
-    version='0.7.0',
+    version='0.8.0',
 
     description='Graphene PynamoDB integration',
     long_description=open('README.rst').read(),
