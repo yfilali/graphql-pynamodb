@@ -7,8 +7,18 @@ from pynamodb.models import Model
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
+def is_password_hash(pwhash):
+    if pwhash.count('$') < 2:
+        return False
+    method, salt, hashval = pwhash.split('$', 2)
+
+    return method.startswith('pbkdf2:') and len(method[7:].split(':')) in (1, 2)
+
+
 class PasswordAttribute(UnicodeAttribute):
     def serialize(self, value):
+        if is_password_hash(value):
+            return value
         return generate_password_hash(value)
 
     def deserialize(self, value):
