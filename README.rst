@@ -92,9 +92,9 @@ Limitations
 -----------
 
 graphene-pynamodb includes a basic implementation of relationships using
-sets. OneToOne and OneToMany relationships are serialized as sets of the
-ids and unserialized lazyly. The limit for an item's size in DynamoDB is
-400KB (see
+sets. OneToOne and OneToMany relationships are serialized as a List of
+the ids and unserialized lazyly. The limit for an item's size in
+DynamoDB is 400KB (see
 http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
 This means the total "row" size including the serialized relationship
 needs to fit within 400KB so make sure to use this accordingly.
