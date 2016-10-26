@@ -622,3 +622,110 @@ def test_root_scan_should_fastforward_on_after():
     result = schema.execute(query)
     assert not result.errors
     assert result.data['articles']['edges'] == expected
+
+
+def test_should_return_total_count():
+    class ReporterNode(PynamoObjectType):
+        class Meta:
+            model = Reporter
+            interfaces = (Node,)
+
+        @classmethod
+        def get_node(cls, id, context, info):
+            return Reporter(id=2, first_name='Cookie Monster')
+
+    class ArticleNode(PynamoObjectType):
+        class Meta:
+            model = Article
+            interfaces = (Node,)
+
+        @classmethod
+        def get_node(cls, id, context, info):
+            return Article(id=1, headline='Article node')
+
+    class Query(graphene.ObjectType):
+        node = Node.Field()
+        reporter = graphene.Field(ReporterNode)
+        article = graphene.Field(ArticleNode)
+        all_articles = PynamoConnectionField(ArticleNode)
+
+        def resolve_reporter(self, *args, **kwargs):
+            return Reporter.get(1)
+
+        def resolve_article(self, *args, **kwargs):
+            return Article.get(1)
+
+    query = '''
+        query ReporterQuery {
+          reporter {
+            id,
+            firstName,
+            articles {
+              edges {
+                node {
+                  headline
+                }
+              }
+            }
+            lastName,
+            email
+          }
+          allArticles {
+            edges {
+              node {
+                headline
+              }
+            }
+          }
+          myArticle: node(id:"QXJ0aWNsZU5vZGU6MQ==") {
+            id
+            ... on ReporterNode {
+                firstName
+            }
+            ... on ArticleNode {
+                headline
+            }
+          }
+        }
+    '''
+    expected = {
+        'reporter': {
+            'id': 'UmVwb3J0ZXJOb2RlOjE=',
+            'firstName': 'ABA',
+            'lastName': 'X',
+            'email': None,
+            'articles': {
+                'edges': [
+                    {
+                        'node': {
+                            'headline': 'Hi!'
+                        }
+                    },
+                    {
+                        'node': {
+                            'headline': 'My Article'
+                        }
+                    }
+                ]
+            }
+        },
+        'allArticles': {
+            'edges': [{
+                'node': {
+                    'headline': 'Hi!'
+                }
+            }]
+        },
+        'myArticle': {
+            'id': 'QXJ0aWNsZU5vZGU6MQ==',
+            'headline': 'Article node'
+        }
+    }
+    schema = graphene.Schema(query=Query)
+    result = schema.execute(query)
+    assert not result.errors
+    assert all(item in expected['reporter'] for item in result.data['reporter'])
+    assert all(item in expected['reporter']['articles'] for item in result.data['reporter']['articles'])
+    assert result.data['myArticle'] == expected['myArticle']
+    assert all(item in result.data['allArticles'] for item in expected['allArticles'])
+

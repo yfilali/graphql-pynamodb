@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from functools import partial
 
+from graphene import Int
 from graphene import relay
 from graphene.relay.connection import PageInfo
 from graphql_relay import from_global_id
@@ -13,6 +14,8 @@ from graphene_pynamodb.utils import get_key_name
 
 
 class PynamoConnectionField(relay.ConnectionField):
+    total_count = Int()
+
     def __init__(self, type, *args, **kwargs):
         super(PynamoConnectionField, self).__init__(
             type,
@@ -28,18 +31,17 @@ class PynamoConnectionField(relay.ConnectionField):
     def get_query(cls, model, context, info, args):
         return model.scan
 
+    # noinspection PyMethodOverriding
     @classmethod
     def connection_resolver(cls, resolver, connection, model, root, args, context, info):
         iterable = resolver(root, args, context, info)
 
         first = args.get('first')
-        (_, after) = from_global_id(args.get('after')) if args.get('after') else (None, None)
         last = args.get('last')
+        (_, after) = from_global_id(args.get('after')) if args.get('after') else (None, None)
         (_, before) = from_global_id(args.get('before')) if args.get('before') else (None, None)
         has_previous_page = bool(after)
         page_size = first if first else last if last else None
-        connection_type = connection
-        pageinfo_type = PageInfo
 
         # get a full scan query since we have no resolved iterable from relationship or resolver function
         if not iterable and not root:
@@ -65,15 +67,21 @@ class PynamoConnectionField(relay.ConnectionField):
             start_cursor = None
             end_cursor = None
 
+        optional_args = {}
+        total_count = len(iterable)
+        if 'total_count' in connection._meta.local_fields:
+            optional_args["total_count"] = total_count
+
         # Construct the connection
-        return connection_type(
+        return connection(
             edges=edges,
-            page_info=pageinfo_type(
+            page_info=PageInfo(
                 start_cursor=start_cursor if start_cursor else '',
                 end_cursor=end_cursor if end_cursor else '',
                 has_previous_page=has_previous_page,
                 has_next_page=has_next
-            )
+            ),
+            **optional_args
         )
 
     def get_resolver(self, parent_resolver):

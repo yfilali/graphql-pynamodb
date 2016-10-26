@@ -14,7 +14,7 @@ from pynamodb.models import Model
 from .converter import convert_pynamo_attribute
 from .registry import Registry, get_global_registry
 from .relationships import RelationshipResult
-from .utils import get_key_name
+from .utils import get_key_name, connection_for_type
 
 
 def get_model_fields(model):
@@ -117,3 +117,7 @@ class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
         graphene_type = info.parent_type.graphene_type
         if is_node(graphene_type):
             return getattr(self, get_key_name(graphene_type._meta.model))
+
+    @classmethod
+    def get_connection(cls):
+        return connection_for_type(cls)
