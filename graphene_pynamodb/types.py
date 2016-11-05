@@ -17,9 +17,13 @@ from .relationships import RelationshipResult
 from .utils import get_key_name, connection_for_type
 
 
-def get_model_fields(model):
+def get_model_fields(model, excluding=None):
+    if excluding is None:
+        excluding = []
     attributes = dict()
     for attr_name in vars(model):
+        if attr_name in excluding:
+            continue
         attr = getattr(model, attr_name)
         if isinstance(attr, Attribute):
             attributes[attr_name] = attr
