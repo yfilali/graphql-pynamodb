@@ -1,9 +1,3 @@
-Please read
-`UPGRADE-v1.0.md <https://github.com/graphql-python/graphene/blob/master/UPGRADE-v1.0.md>`__
-to learn how to upgrade to Graphene ``1.0``.
-
---------------
-
 |Graphene Logo| Graphene-PynamoDB |Build Status| |Coverage Status| |PyPI version|
 =================================================================================
 
