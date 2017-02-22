@@ -19,8 +19,16 @@ def convert_pynamo_attribute(type, attribute, registry=None):
 
 @convert_pynamo_attribute.register(attributes.BinaryAttribute)
 @convert_pynamo_attribute.register(attributes.UnicodeAttribute)
-@convert_pynamo_attribute.register(attributes.UTCDateTimeAttribute)
 def convert_column_to_string(type, attribute, registry=None):
+    if attribute.is_hash_key:
+        return ID(description=attribute.attr_name, required=not attribute.null)
+
+    return String(description=getattr(attribute, 'attr_name'),
+                  required=not (getattr(attribute, 'null', True)))
+
+
+@convert_pynamo_attribute.register(attributes.UTCDateTimeAttribute)
+def convert_date_to_string(type, attribute, registry=None):
     return String(description=getattr(attribute, 'attr_name'),
                   required=not (getattr(attribute, 'null', True)))
 
@@ -47,10 +55,11 @@ def convert_relationship_to_dynamic(type, attribute, registry=None):
 def convert_column_to_int_or_id(type, attribute, registry=None):
     if attribute.is_hash_key:
         return ID(description=attribute.attr_name, required=not attribute.null)
-    else:
-        return Int(description=attribute.attr_name, required=not attribute.null)
+
+    return Int(description=attribute.attr_name, required=not attribute.null)
 
 
+@convert_pynamo_attribute.register(attributes.LegacyBooleanAttribute)
 @convert_pynamo_attribute.register(attributes.BooleanAttribute)
 def convert_column_to_boolean(type, attribute, registry=None):
     return Boolean(description=attribute.attr_name, required=not attribute.null)

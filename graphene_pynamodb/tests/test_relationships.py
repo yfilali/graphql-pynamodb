@@ -162,8 +162,8 @@ def test_result_should_be_lazy():
 
 
 def test_relationships_should_compare_well():
-    article1 = Article(1, healine="test")
-    article2 = Article(2, healine="test")
+    article1 = Article(1, headline="test")
+    article2 = Article(2, headline="test")
     rel1 = RelationshipResult('id', 1, Article)
     assert rel1 == article1
     assert rel1 != article2

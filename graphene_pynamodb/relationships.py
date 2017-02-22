@@ -1,5 +1,5 @@
 from pynamodb.attributes import Attribute, NumberAttribute
-from pynamodb.constants import STRING, ATTR_TYPE_MAP, NUMBER_SHORT
+from pynamodb.constants import STRING, ATTR_TYPE_MAP, NUMBER_SHORT, LIST, STRING_SET_SHORT, LIST_SHORT
 from pynamodb.models import Model
 from six import string_types
 from wrapt import ObjectProxy
@@ -109,7 +109,7 @@ class OneToOne(Relationship):
 
 
 class OneToMany(Relationship):
-    attr_type = 'L'
+    attr_type = LIST
 
     def serialize(self, models):
         key_type = ATTR_TYPE_MAP[getattr(self.model, self.hash_key_name).attr_type]
@@ -134,9 +134,7 @@ class OneToMany(Relationship):
     def get_value(self, value):
         # we need this for legacy compatibility.
         # deserialize previous string set implementation
-        if isinstance(value, dict) and "SS" in value:
-            return value["SS"]
-        return value["L"]
+        if isinstance(value, dict) and STRING_SET_SHORT in value:
+            return value[STRING_SET_SHORT]
 
-
-ATTR_TYPE_MAP["L"] = "L"
+        return value[LIST_SHORT]
