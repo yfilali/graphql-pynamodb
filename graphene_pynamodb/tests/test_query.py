@@ -44,7 +44,7 @@ def test_should_query_well():
             return Reporter.get(1)
 
         def resolve_reporters(self, *args, **kwargs):
-            return Reporter.scan()
+            return list(Reporter.scan())
 
     query = '''
         query ReporterQuery {
@@ -728,4 +728,3 @@ def test_should_return_total_count():
     assert all(item in expected['reporter']['articles'] for item in result.data['reporter']['articles'])
     assert result.data['myArticle'] == expected['myArticle']
     assert all(item in result.data['allArticles'] for item in expected['allArticles'])
-
