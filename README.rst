@@ -58,7 +58,7 @@ following:
         users = graphene.List(UserNode)
 
         def resolve_users(self, args, context, info):
-            return User.scan()
+            return list(User.scan())
 
 
     schema = graphene.Schema(query=Query)
