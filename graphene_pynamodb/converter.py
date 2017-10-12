@@ -88,10 +88,10 @@ class MapToJSONString(JSONString):
 
 
 @convert_pynamo_attribute.register(attributes.MapAttribute)
-def convert_json_to_string(type, attribute, registry=None):
+def convert_map_to_json(type, attribute, registry=None):
     return MapToJSONString(description=attribute.attr_name, required=not attribute.null)
 
 
 @convert_pynamo_attribute.register(attributes.ListAttribute)
-def convert_json_to_string(type, attribute, registry=None):
+def convert_list_to_list(type, attribute, registry=None):
     return List(String, description=attribute.attr_name)
