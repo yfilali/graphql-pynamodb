@@ -5,25 +5,10 @@ python:
 - 3.4
 - 3.5
 - 3.6
-- pypy
-before_install:
-- |
-  if [ "$TRAVIS_PYTHON_VERSION" = "pypy" ]; then
-    export PYENV_ROOT="$HOME/.pyenv"
-    if [ -f "$PYENV_ROOT/bin/pyenv" ]; then
-      cd "$PYENV_ROOT" && git pull
-    else
-      rm -rf "$PYENV_ROOT" && git clone --depth 1 https://github.com/yyuu/pyenv.git "$PYENV_ROOT"
-    fi
-    export PYPY_VERSION="4.0.1"
-    "$PYENV_ROOT/bin/pyenv" install "pypy-$PYPY_VERSION"
-    virtualenv --python="$PYENV_ROOT/versions/pypy-$PYPY_VERSION/bin/python" "$HOME/virtualenvs/pypy-$PYPY_VERSION"
-    source "$HOME/virtualenvs/pypy-$PYPY_VERSION/bin/activate"
-  fi
 install:
 - |
   if [ "$TEST_TYPE" = build ]; then
-    pip install pytest==3.0.2 pytest-cov pytest-benchmark coveralls six mock sqlalchemy_utils
+    pip install pytest==3.0.2 pytest-cov pytest-benchmark coveralls six mock
     pip install -e .
     python setup.py develop
   elif [ "$TEST_TYPE" = lint ]; then
