@@ -1,3 +1,4 @@
+import json
 import logging
 
 import graphene
@@ -66,7 +67,7 @@ def test_should_query_well():
             'email': None,
             'firstName': 'ABA',
             'lastName': 'X',
-            'customMap': '{"key1": "value1", "key2": "value2"}',
+            'customMap': {"key1": "value1", "key2": "value2"},
             'awards': ['pulizer']
         },
         'reporters': [{
@@ -78,7 +79,8 @@ def test_should_query_well():
     schema = graphene.Schema(query=Query)
     result = schema.execute(query)
     assert not result.errors
-    assert result.data['reporter'] == expected['reporter']
+    result.data['reporter']["customMap"] = json.loads(result.data['reporter']["customMap"])
+    assert dict(result.data['reporter']) == expected['reporter']
     assert all(item in result.data['reporters'] for item in expected['reporters'])
 
 

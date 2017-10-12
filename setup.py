@@ -33,7 +33,8 @@ setup(
 
     install_requires=[
         'six>=1.10.0',
-        'graphene>=1.0',
+        'graphql-core >=1.0, <2.0',
+        'graphene >=1.0, <2.0',
         'pynamodb>=2.0.0',
         'singledispatch>=3.4.0.3',
         'wrapt>=1.10.8'
