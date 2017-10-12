@@ -1,3 +1,5 @@
+import json
+
 from graphene import Dynamic
 from graphene import Field
 from graphene import ID, Boolean, Int, List, String
@@ -75,3 +77,21 @@ def convert_scalar_list_to_list(type, attribute, registry=None):
 @convert_pynamo_attribute.register(attributes.JSONAttribute)
 def convert_json_to_string(type, attribute, registry=None):
     return JSONString(description=attribute.attr_name, required=not attribute.null)
+
+
+class MapToJSONString(JSONString):
+    '''JSON String Converter for MapAttribute'''
+
+    @staticmethod
+    def serialize(dt):
+        return json.dumps(dt.as_dict())
+
+
+@convert_pynamo_attribute.register(attributes.MapAttribute)
+def convert_json_to_string(type, attribute, registry=None):
+    return MapToJSONString(description=attribute.attr_name, required=not attribute.null)
+
+
+@convert_pynamo_attribute.register(attributes.ListAttribute)
+def convert_json_to_string(type, attribute, registry=None):
+    return List(String, description=attribute.attr_name)

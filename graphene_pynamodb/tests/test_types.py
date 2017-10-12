@@ -46,6 +46,8 @@ def test_objecttype_registered():
     assert Character._meta.model == Reporter
     assert list(Character._meta.fields.keys()) == [
         'articles',
+        'awards',
+        'custom_map',
         'email',
         'favorite_article',
         'first_name',

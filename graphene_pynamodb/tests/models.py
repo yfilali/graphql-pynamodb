@@ -3,7 +3,8 @@ from __future__ import absolute_import
 import os
 from datetime import datetime
 
-from pynamodb.attributes import (NumberAttribute, NumberSetAttribute, UnicodeAttribute, UTCDateTimeAttribute)
+from pynamodb.attributes import (NumberAttribute, NumberSetAttribute, UnicodeAttribute, UTCDateTimeAttribute,
+                                 MapAttribute, ListAttribute)
 from pynamodb.models import Model
 
 from graphene_pynamodb.relationships import OneToOne, OneToMany
@@ -58,3 +59,5 @@ class Reporter(Model):
     pets = NumberSetAttribute(null=True)
     articles = OneToMany(Article, null=True)
     favorite_article = OneToOne(Article, null=True)
+    custom_map = MapAttribute(null=True)
+    awards = ListAttribute(null=True)

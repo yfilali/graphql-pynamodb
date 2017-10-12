@@ -7,7 +7,7 @@ from pynamodb.attributes import (BinaryAttribute, BinarySetAttribute,
                                  BooleanAttribute, JSONAttribute,
                                  NumberAttribute, NumberSetAttribute,
                                  UnicodeAttribute, UnicodeSetAttribute,
-                                 UTCDateTimeAttribute)
+                                 UTCDateTimeAttribute, MapAttribute, ListAttribute)
 from pynamodb.models import Model
 
 from graphene_pynamodb.relationships import OneToMany
@@ -117,3 +117,11 @@ def test_should_onetomany_convert_field():
     assert isinstance(dynamic_field, Dynamic)
     graphene_type = dynamic_field.get_type()
     assert isinstance(graphene_type, PynamoConnectionField)
+
+
+def test_should_map_converts_to_json():
+    assert_attribute_conversion(MapAttribute(), JSONString)
+
+
+def test_should_list_convert_list():
+    assert_attribute_conversion(ListAttribute(), graphene.List)

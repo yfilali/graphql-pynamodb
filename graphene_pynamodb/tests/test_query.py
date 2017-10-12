@@ -15,7 +15,8 @@ def setup_fixtures():
         if not model.exists():
             model.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
 
-    reporter = Reporter(id=1, first_name='ABA', last_name='X')
+    reporter = Reporter(id=1, first_name='ABA', last_name='X', awards=['pulizer'],
+                        custom_map={'key1': 'value1', 'key2': 'value2'})
     reporter.articles = [Article(1), Article(3)]
     reporter.save()
     reporter2 = Reporter(id=2, first_name='ABO', last_name='Y')
@@ -51,7 +52,9 @@ def test_should_query_well():
           reporter {
             firstName,
             lastName,
-            email
+            email,
+            customMap,
+            awards
           }
           reporters {
             firstName
@@ -62,7 +65,9 @@ def test_should_query_well():
         'reporter': {
             'email': None,
             'firstName': 'ABA',
-            'lastName': 'X'
+            'lastName': 'X',
+            'customMap': '{"key1": "value1", "key2": "value2"}',
+            'awards': ['pulizer']
         },
         'reporters': [{
             'firstName': 'ABO',
