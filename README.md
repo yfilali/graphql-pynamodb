@@ -1,5 +1,5 @@
 
-# ![Graphene Logo](http://graphene-python.org/favicon.png) Graphene-PynamoDB [![Build Status](https://travis-ci.org/yfilali/graphql-pynamodb.svg?branch=master)](https://travis-ci.org/yfilali/graphql-pynamodb) [![Coverage Status](https://coveralls.io/repos/github/yfilali/graphql-pynamodb/badge.svg?branch=master)](https://coveralls.io/github/yfilali/graphql-pynamodb?branch=master) [![PyPI version](https://badge.fury.io/py/graphene-pynamodb.svg)](https://badge.fury.io/py/graphene-pynamodb)
+# ![Graphene Logo](https://avatars2.githubusercontent.com/u/15002022?s=200&v=4) Graphene-PynamoDB [![Build Status](https://travis-ci.org/yfilali/graphql-pynamodb.svg?branch=master)](https://travis-ci.org/yfilali/graphql-pynamodb) [![Coverage Status](https://coveralls.io/repos/github/yfilali/graphql-pynamodb/badge.svg?branch=master)](https://coveralls.io/github/yfilali/graphql-pynamodb?branch=master) [![PyPI version](https://badge.fury.io/py/graphene-pynamodb.svg)](https://badge.fury.io/py/graphene-pynamodb)
 
 
 A [PynamoDB](http://pynamodb.readthedocs.io/) integration for [Graphene](http://graphene-python.org/).
