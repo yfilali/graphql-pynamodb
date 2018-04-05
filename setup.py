@@ -24,6 +24,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
 
@@ -35,8 +36,9 @@ setup(
         'six>=1.10.0',
         'graphql-core >=1.0, <2.0',
         'graphene >=1.0, <2.0',
-        'pynamodb>=2.0.0',
-        'singledispatch>=3.4.0.3',
+        'botocore < 1.11.0, >= 1.10.0',
+        'pynamodb < 3.0.0, >= 2.0.0',
+        'singledispatch >= 3.4.0.3',
         'wrapt>=1.10.8'
     ],
     setup_requires=['pytest-runner'],
