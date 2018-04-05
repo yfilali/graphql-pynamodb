@@ -266,7 +266,7 @@ def test_should_mutate_well():
         article = graphene.Field(ArticleNode)
 
         @classmethod
-        def mutate(cls, instance, info, args):
+        def mutate(cls, root, info, **args):
             new_article = Article(
                 id=3,
                 headline=args.get('headline'),
