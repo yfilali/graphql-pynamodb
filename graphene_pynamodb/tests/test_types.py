@@ -36,7 +36,7 @@ def test_pynamo_interface():
 
 @patch('graphene_pynamodb.tests.models.Article.get', return_value=Article(id=1))
 def test_pynamo_get_node(get):
-    human = Human.get_node(1, None, None)
+    human = Human.get_node(None, 1)
     get.assert_called_with(1)
     assert human.id == 1
 
@@ -69,5 +69,5 @@ def test_node_replacedfield():
 
 def test_object_type():
     assert issubclass(Human, ObjectType)
-    assert list(Human._meta.fields.keys()) == ['id', 'headline', 'reporter', 'pub_date']
+    assert sorted(list(Human._meta.fields.keys())) == ['headline', 'id', 'pub_date', 'reporter']
     assert is_node(Human)

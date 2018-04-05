@@ -6,14 +6,14 @@ from ..types import PynamoObjectType
 
 
 def test_should_raise_if_no_model():
-    with raises(Exception) as excinfo:
+    with raises(AssertionError) as excinfo:
         class Character1(PynamoObjectType):
             pass
     assert 'valid PynamoDB Model' in str(excinfo.value)
 
 
 def test_should_raise_if_model_is_invalid():
-    with raises(Exception) as excinfo:
+    with raises(AssertionError) as excinfo:
         class Character2(PynamoObjectType):
             class Meta:
                 model = 1
