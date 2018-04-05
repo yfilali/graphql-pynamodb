@@ -87,7 +87,10 @@ class MapToJSONString(JSONString):
 
 @convert_pynamo_attribute.register(attributes.MapAttribute)
 def convert_map_to_json(type, attribute, registry=None):
-    name = attribute.attr_name if hasattr(attribute, 'attr_namer') else "MapAttribute"
+    try:
+        name = attribute.attr_name
+    except KeyError:
+        name = "MapAttribute"
     required = not attribute.null if hasattr(attribute, 'null') else False
     return MapToJSONString(description=name, required=required)
 

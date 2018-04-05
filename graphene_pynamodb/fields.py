@@ -18,7 +18,7 @@ class PynamoConnectionField(relay.ConnectionField):
 
     def __init__(self, type, *args, **kwargs):
         super(PynamoConnectionField, self).__init__(
-            type,
+            type._meta.connection,
             *args,
             **kwargs
         )
@@ -69,7 +69,7 @@ class PynamoConnectionField(relay.ConnectionField):
 
         optional_args = {}
         total_count = len(iterable)
-        if 'total_count' in connection._meta.local_fields:
+        if 'total_count' in connection._meta.fields:
             optional_args["total_count"] = total_count
 
         # Construct the connection

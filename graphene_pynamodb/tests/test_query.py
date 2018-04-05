@@ -109,10 +109,10 @@ def test_should_node():
         article = graphene.Field(ArticleNode)
         all_articles = PynamoConnectionField(ArticleNode)
 
-        def resolve_reporter(self, info, args):
+        def resolve_reporter(self, *args):
             return Reporter.get(1)
 
-        def resolve_article(self, info, args):
+        def resolve_article(self, *args):
             return Article.get(1)
 
     query = '''
