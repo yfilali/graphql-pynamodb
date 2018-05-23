@@ -1,7 +1,7 @@
 import json
 
-from graphene import Dynamic, Field
-from graphene import ID, Boolean, Int, List, String
+from graphene import Dynamic, Field, Float
+from graphene import ID, Boolean, List, String
 from graphene.types.json import JSONString
 from pynamodb import attributes
 from singledispatch import singledispatch
@@ -52,11 +52,11 @@ def convert_relationship_to_dynamic(type, attribute, registry=None):
 
 
 @convert_pynamo_attribute.register(attributes.NumberAttribute)
-def convert_column_to_int_or_id(type, attribute, registry=None):
+def convert_column_to_float_or_id(type, attribute, registry=None):
     if attribute.is_hash_key:
         return ID(description=attribute.attr_name, required=not attribute.null)
 
-    return Int(description=attribute.attr_name, required=not attribute.null)
+    return Float(description=attribute.attr_name, required=not attribute.null)
 
 
 @convert_pynamo_attribute.register(attributes.LegacyBooleanAttribute)
