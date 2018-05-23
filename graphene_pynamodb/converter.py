@@ -1,9 +1,5 @@
 import json
 
-from graphene import Dynamic, Float
-from graphene import Field
-from graphene import ID, Boolean, List, String
-from graphene import is_node
 from graphene import Dynamic, Field, Float
 from graphene import ID, Boolean, List, String
 from graphene.types.json import JSONString
