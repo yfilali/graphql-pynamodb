@@ -42,8 +42,8 @@ def test_should_binary_convert_string():
     assert_attribute_conversion(BinaryAttribute(), graphene.String)
 
 
-def test_should_number_convert_int():
-    assert_attribute_conversion(NumberAttribute(), graphene.Int)
+def test_should_number_convert_float():
+    assert_attribute_conversion(NumberAttribute(), graphene.Float)
 
 
 def test_should_boolean_convert_boolean():

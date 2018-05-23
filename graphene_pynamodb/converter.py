@@ -1,8 +1,8 @@
 import json
 
-from graphene import Dynamic
+from graphene import Dynamic, Float
 from graphene import Field
-from graphene import ID, Boolean, Int, List, String
+from graphene import ID, Boolean, List, String
 from graphene import is_node
 from graphene.types.json import JSONString
 from pynamodb import attributes
@@ -54,11 +54,11 @@ def convert_relationship_to_dynamic(type, attribute, registry=None):
 
 
 @convert_pynamo_attribute.register(attributes.NumberAttribute)
-def convert_column_to_int_or_id(type, attribute, registry=None):
+def convert_column_to_float_or_id(type, attribute, registry=None):
     if attribute.is_hash_key:
         return ID(description=attribute.attr_name, required=not attribute.null)
 
-    return Int(description=attribute.attr_name, required=not attribute.null)
+    return Float(description=attribute.attr_name, required=not attribute.null)
 
 
 @convert_pynamo_attribute.register(attributes.LegacyBooleanAttribute)
