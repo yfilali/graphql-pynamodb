@@ -20,7 +20,7 @@ def get_key_name(model):
 
 
 def connection_for_type(_type):
-    class Connection(graphene.Connection):
+    class Connection(graphene.relay.Connection):
         total_count = graphene.Int()
 
         class Meta:

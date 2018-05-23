@@ -1,13 +1,10 @@
-import inspect
 from collections import OrderedDict
+from inspect import isclass
 
-import six
-from graphene import Field
+from graphene import Field, Connection, Node
 from graphene.relay import is_node
-from graphene.types.objecttype import ObjectType, ObjectTypeMeta
-from graphene.types.options import Options
-from graphene.types.utils import merge, yank_fields_from_attrs
-from graphene.utils.is_base_type import is_base_type
+from graphene.types.objecttype import ObjectType, ObjectTypeOptions
+from graphene.types.utils import yank_fields_from_attrs
 from pynamodb.attributes import Attribute, NumberAttribute
 from pynamodb.models import Model
 
@@ -31,93 +28,93 @@ def get_model_fields(model, excluding=None):
     return OrderedDict(sorted(attributes.items(), key=lambda t: t[0]))
 
 
-def construct_fields(options):
-    only_fields = options.only_fields
-    exclude_fields = options.exclude_fields
-    inspected_model = get_model_fields(options.model)
+def construct_fields(model, registry, only_fields, exclude_fields):
+    inspected_model = get_model_fields(model)
 
     fields = OrderedDict()
 
     for name, attribute in inspected_model.items():
         is_not_in_only = only_fields and name not in only_fields
-        is_already_created = name in options.fields
+        is_already_created = name in fields
         is_excluded = name in exclude_fields or is_already_created
         if is_not_in_only or is_excluded:
             # We skip this field if we specify only_fields and is not
             # in there. Or when we excldue this field in exclude_fields
             continue
-        converted_column = convert_pynamo_attribute(attribute, attribute, options.registry)
+        converted_column = convert_pynamo_attribute(attribute, attribute, registry)
         fields[name] = converted_column
 
     return fields
 
 
-class PynamoObjectTypeMeta(ObjectTypeMeta):
-    @staticmethod
-    def __new__(cls, name, bases, attrs):
-        # Also ensure initialization is only performed for subclasses of Model
-        # (excluding Model class itself).
-        if not is_base_type(bases, PynamoObjectTypeMeta):
-            return type.__new__(cls, name, bases, attrs)
+class PynamoObjectTypeOptions(ObjectTypeOptions):
+    model = None  # type: Model
+    registry = None  # type: Registry
+    connection = None  # type: Type[Connection]
+    id = None  # type: str
 
-        options = Options(
-            attrs.pop('Meta', None),
-            name=name,
-            description=attrs.pop('__doc__', None),
-            model=None,
-            local_fields=None,
-            only_fields=(),
-            exclude_fields=(),
-            id='id',
-            interfaces=(),
-            registry=None
-        )
 
-        if not options.registry:
-            options.registry = get_global_registry()
-        assert isinstance(options.registry, Registry), (
-            'The attribute registry in {}.Meta needs to be an'
-            ' instance of Registry, received "{}".'
-        ).format(name, options.registry)
-
-        assert (inspect.isclass(options.model) and issubclass(options.model, Model)), (
+class PynamoObjectType(ObjectType):
+    @classmethod
+    def __init_subclass_with_meta__(cls, model=None, registry=None, skip_registry=False,
+                                    only_fields=(), exclude_fields=(), connection=None,
+                                    use_connection=None, interfaces=(), id=None, **options):
+        assert model and isclass(model) and issubclass(model, Model), (
             'You need to pass a valid PynamoDB Model in '
             '{}.Meta, received "{}".'
-        ).format(name, options.model)
+        ).format(cls.__name__, model)
 
-        cls = ObjectTypeMeta.__new__(cls, name, bases, dict(attrs, _meta=options))
+        if not registry:
+            registry = get_global_registry()
 
-        options.registry.register(cls)
+        assert isinstance(registry, Registry), (
+            'The attribute registry in {} needs to be an instance of '
+            'Registry, received "{}".'
+        ).format(cls.__name__, registry)
 
-        options.pynamo_fields = yank_fields_from_attrs(
-            construct_fields(options),
+        pynamo_fields = yank_fields_from_attrs(
+            construct_fields(model, registry, only_fields, exclude_fields),
             _as=Field,
         )
-        options.fields = merge(
-            options.interface_fields,
-            options.pynamo_fields,
-            options.base_fields,
-            options.local_fields
-        )
 
-        return cls
+        if use_connection is None and interfaces:
+            use_connection = any((issubclass(interface, Node) for interface in interfaces))
 
+        if use_connection and not connection:
+            # We create the connection automatically
+            connection = Connection.create_type('{}Connection'.format(cls.__name__), node=cls)
 
-class PynamoObjectType(six.with_metaclass(PynamoObjectTypeMeta, ObjectType)):
+        if connection is not None:
+            assert issubclass(connection, Connection), (
+                "The connection must be a Connection. Received {}"
+            ).format(connection.__name__)
+
+        _meta = PynamoObjectTypeOptions(cls)
+        _meta.model = model
+        _meta.registry = registry
+        _meta.fields = pynamo_fields
+        _meta.connection = connection
+        _meta.id = id or 'id'
+
+        super(PynamoObjectType, cls).__init_subclass_with_meta__(_meta=_meta, interfaces=interfaces, **options)
+
+        if not skip_registry:
+            registry.register(cls)
+
     @classmethod
-    def is_type_of(cls, root, context, info):
+    def is_type_of(cls, root, info):
         if isinstance(root, RelationshipResult) and root.__wrapped__ == cls._meta.model:
             return True
         return isinstance(root, cls._meta.model)
 
     @classmethod
-    def get_node(cls, id, context, info):
+    def get_node(cls, info, id):
         if isinstance(getattr(cls._meta.model, get_key_name(cls._meta.model)), NumberAttribute):
             return cls._meta.model.get(int(id))
         else:
             return cls._meta.model.get(id)
 
-    def resolve_id(self, args, context, info):
+    def resolve_id(self, info):
         graphene_type = info.parent_type.graphene_type
         if is_node(graphene_type):
             return getattr(self, get_key_name(graphene_type._meta.model))

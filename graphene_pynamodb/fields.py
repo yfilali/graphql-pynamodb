@@ -18,7 +18,7 @@ class PynamoConnectionField(relay.ConnectionField):
 
     def __init__(self, type, *args, **kwargs):
         super(PynamoConnectionField, self).__init__(
-            type,
+            type._meta.connection,
             *args,
             **kwargs
         )
@@ -28,13 +28,13 @@ class PynamoConnectionField(relay.ConnectionField):
         return self.type._meta.node._meta.model
 
     @classmethod
-    def get_query(cls, model, context, info, args):
+    def get_query(cls, model, info, **args):
         return model.scan
 
     # noinspection PyMethodOverriding
     @classmethod
-    def connection_resolver(cls, resolver, connection, model, root, args, context, info):
-        iterable = resolver(root, args, context, info)
+    def connection_resolver(cls, resolver, connection, model, root, info, **args):
+        iterable = resolver(root, info, **args)
 
         first = args.get('first')
         last = args.get('last')
@@ -45,7 +45,7 @@ class PynamoConnectionField(relay.ConnectionField):
 
         # get a full scan query since we have no resolved iterable from relationship or resolver function
         if not iterable and not root:
-            query = cls.get_query(model, context, info, args)
+            query = cls.get_query(model, info, **args)
             iterable = query()
             if first or last or after or before:
                 raise NotImplementedError(
@@ -69,7 +69,7 @@ class PynamoConnectionField(relay.ConnectionField):
 
         optional_args = {}
         total_count = len(iterable)
-        if 'total_count' in connection._meta.local_fields:
+        if 'total_count' in connection._meta.fields:
             optional_args["total_count"] = total_count
 
         # Construct the connection

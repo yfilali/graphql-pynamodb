@@ -91,7 +91,7 @@ def test_should_node():
             interfaces = (Node,)
 
         @classmethod
-        def get_node(cls, id, context, info):
+        def get_node(cls, info, id):
             return Reporter(id=2, first_name='Cookie Monster')
 
     class ArticleNode(PynamoObjectType):
@@ -100,7 +100,7 @@ def test_should_node():
             interfaces = (Node,)
 
         @classmethod
-        def get_node(cls, id, context, info):
+        def get_node(cls, info, id):
             return Article(id=1, headline='Article node')
 
     class Query(graphene.ObjectType):
@@ -109,10 +109,10 @@ def test_should_node():
         article = graphene.Field(ArticleNode)
         all_articles = PynamoConnectionField(ArticleNode)
 
-        def resolve_reporter(self, *args, **kwargs):
+        def resolve_reporter(self, *args):
             return Reporter.get(1)
 
-        def resolve_article(self, *args, **kwargs):
+        def resolve_article(self, *args):
             return Article.get(1)
 
     query = '''
@@ -249,7 +249,7 @@ def test_should_mutate_well():
             interfaces = (Node,)
 
         @classmethod
-        def get_node(cls, id, info):
+        def get_node(cls, info, id):
             return Reporter(id=2, first_name='Cookie Monster')
 
     class ArticleNode(PynamoObjectType):
@@ -266,7 +266,7 @@ def test_should_mutate_well():
         article = graphene.Field(ArticleNode)
 
         @classmethod
-        def mutate(cls, instance, args, context, info):
+        def mutate(cls, root, info, **args):
             new_article = Article(
                 id=3,
                 headline=args.get('headline'),
@@ -638,7 +638,7 @@ def test_should_return_total_count():
             interfaces = (Node,)
 
         @classmethod
-        def get_node(cls, id, context, info):
+        def get_node(cls, info, id):
             return Reporter(id=2, first_name='Cookie Monster')
 
     class ArticleNode(PynamoObjectType):
@@ -647,7 +647,7 @@ def test_should_return_total_count():
             interfaces = (Node,)
 
         @classmethod
-        def get_node(cls, id, context, info):
+        def get_node(cls, info, id):
             return Article(id=1, headline='Article node')
 
     class Query(graphene.ObjectType):

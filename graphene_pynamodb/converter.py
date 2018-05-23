@@ -4,6 +4,8 @@ from graphene import Dynamic, Float
 from graphene import Field
 from graphene import ID, Boolean, List, String
 from graphene import is_node
+from graphene import Dynamic, Field, Float
+from graphene import ID, Boolean, List, String
 from graphene.types.json import JSONString
 from pynamodb import attributes
 from singledispatch import singledispatch
@@ -46,7 +48,7 @@ def convert_relationship_to_dynamic(type, attribute, registry=None):
             return Field(_type)
 
         if isinstance(attribute, OneToMany):
-            if is_node(_type):
+            if _type._meta.connection:
                 return PynamoConnectionField(_type)
             return Field(List(_type))
 

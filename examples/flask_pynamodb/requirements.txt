@@ -1,5 +1,5 @@
-graphene==1.2
-pynamodb==2.1.4
-graphene-pynamodb==0.9.0
+graphene==2.1
+pynamodb==2.2.0
+graphene-pynamodb==2.0.0
 Flask==0.12
 Flask-GraphQL==1.4.0

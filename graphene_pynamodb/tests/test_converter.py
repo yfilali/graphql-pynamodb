@@ -1,14 +1,14 @@
 import graphene
-from graphene import Dynamic
+from graphene import Dynamic, relay
 from graphene import Node
 from graphene.types.json import JSONString
-from py.test import raises
 from pynamodb.attributes import (BinaryAttribute, BinarySetAttribute,
                                  BooleanAttribute, JSONAttribute,
                                  NumberAttribute, NumberSetAttribute,
                                  UnicodeAttribute, UnicodeSetAttribute,
                                  UTCDateTimeAttribute, MapAttribute, ListAttribute)
 from pynamodb.models import Model
+from pytest import raises
 
 from graphene_pynamodb.relationships import OneToMany
 from .models import Article, Reporter
@@ -70,7 +70,7 @@ def test_should_onetoone_convert_field():
     class A(PynamoObjectType):
         class Meta:
             model = Article
-            interfaces = (Node,)
+            interfaces = [relay.Node]
 
     dynamic_field = convert_pynamo_attribute(Reporter.favorite_article, Reporter.favorite_article, A._meta.registry)
     assert isinstance(dynamic_field, Dynamic)
