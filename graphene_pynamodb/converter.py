@@ -84,6 +84,18 @@ class MapToJSONString(JSONString):
     def serialize(dt):
         return json.dumps(dt.as_dict())
 
+class ListOfMapToObject(JSONString):
+    '''JSON String Converter for List of MapAttribute'''
+
+    @staticmethod
+    def serialize(dt):
+        if len(dt) == 0:
+            return list()
+        
+        if issubclass(type(dt[0]), attributes.MapAttribute):
+            return list(map(lambda x: x.as_dict(), dt))
+        else:
+            return dt   
 
 @convert_pynamo_attribute.register(attributes.MapAttribute)
 def convert_map_to_json(type, attribute, registry=None):
@@ -95,6 +107,16 @@ def convert_map_to_json(type, attribute, registry=None):
     return MapToJSONString(description=name, required=required)
 
 
+
 @convert_pynamo_attribute.register(attributes.ListAttribute)
 def convert_list_to_list(type, attribute, registry=None):
-    return List(String, description=attribute.attr_name)
+    if attribute.element_type:
+        try:
+            name = attribute.attr_name
+        except KeyError:
+            name = "MapAttribute"
+
+        required = not attribute.null if hasattr(attribute, 'null') else False
+        return ListOfMapToObject(description=name, required=required)
+    else:
+        return List(String, description=attribute.attr_name)
