@@ -5,7 +5,7 @@ from models import User
  
 def authenticate(email, password):
     try:
-        user = User.email_index.query(email).next()
+        user = next(User.email_index.query(email))
     except StopIteration:
         return None
  
