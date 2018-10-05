@@ -86,13 +86,13 @@ class MapToJSONString(JSONString):
 
 
 class ListOfMapToObject(JSONString):
-    '''JSON String Converter for List of MapAttribute'''
+    """JSON String Converter for List of MapAttribute"""
 
     @staticmethod
     def serialize(dt):
         if len(dt) == 0:
             return list()
-        
+
         if issubclass(type(dt[0]), attributes.MapAttribute):
             return list(map(lambda x: x.as_dict(), dt))
         else:
