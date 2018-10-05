@@ -1,4 +1,4 @@
-|Graphene Logo| Graphene-PynamoDB |Build Status| |Coverage Status| |PyPI version|
+Graphene-PynamoDB |Build Status| |Coverage Status| |PyPI version|
 =================================================================================
 
 A `PynamoDB <http://pynamodb.readthedocs.io/>`__ integration for
