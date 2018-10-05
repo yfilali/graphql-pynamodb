@@ -15,6 +15,7 @@ from .models import Article, Reporter
 from .. import PynamoConnectionField
 from .. import PynamoObjectType
 from ..converter import convert_pynamo_attribute
+from ..converter import ListOfMapToObject
 
 
 def assert_attribute_conversion(attribute, graphene_field, **kwargs):
@@ -125,3 +126,11 @@ def test_should_map_converts_to_json():
 
 def test_should_list_convert_list():
     assert_attribute_conversion(ListAttribute(), graphene.List)
+
+def test_should_list_convert_list_of_map():
+    class Address(MapAttribute):
+        latitude = NumberAttribute(null=False)
+        longitude = NumberAttribute(null=False)
+        address = UnicodeAttribute()
+    
+    assert_attribute_conversion(ListAttribute(of=Address), ListOfMapToObject)
