@@ -29,7 +29,7 @@ class Query(graphene.ObjectType):
     node = relay.Node.Field()
     viewer = graphene.Field(User, )
  
-    def resolve_viewer(self, args, context, info):
+    def resolve_viewer(self, *args, **kwargs):
         try:
             logged_in_user = g.user
         except AttributeError:
