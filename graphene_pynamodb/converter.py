@@ -89,7 +89,7 @@ class MapToJSONString(JSONString):
 def convert_map_to_json(type, attribute, registry=None):
     try:
         name = attribute.attr_name
-    except KeyError:
+    except (KeyError, AttributeError):
         name = "MapAttribute"
     required = not attribute.null if hasattr(attribute, 'null') else False
     return MapToJSONString(description=name, required=required)
