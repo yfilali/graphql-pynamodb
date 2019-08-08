@@ -4,7 +4,7 @@ from pynamodb.models import Model
 from six import string_types
 from wrapt import ObjectProxy
 
-from graphene_pynamodb.utils import get_key_name
+from graphene_pynamodb.utils import get_key_name, unique
 
 
 class RelationshipResult(ObjectProxy):
@@ -111,9 +111,15 @@ class OneToOne(Relationship):
 class OneToMany(Relationship):
     attr_type = LIST
 
+    def __init__(self, model, lazy=True, **args):
+        self._uniqueness = args.get('uniqueness', False)
+        args.pop("uniqueness", None)
+
+        super(OneToMany, self).__init__(model, lazy, **args)
+
     def serialize(self, models):
         key_type = ATTR_TYPE_MAP[getattr(self.model, self.hash_key_name).attr_type]
-        return [{key_type: str(getattr(model, self.hash_key_name))} for model in models]
+        return self._check_uniqueness([{key_type: str(getattr(model, self.hash_key_name))} for model in models], key_type)
 
     def deserialize(self, hash_keys):
         if hash_keys and isinstance(hash_keys[0], dict):
@@ -138,3 +144,15 @@ class OneToMany(Relationship):
             return value[STRING_SET_SHORT]
 
         return value[LIST_SHORT]
+
+    def _check_uniqueness(self, keys, key_type):
+        if not self._uniqueness:
+            return keys
+        key_ids = list(map(lambda key: key.get(key_type), keys))
+        has_duplicate = len(key_ids) != len(set(key_ids))
+
+        if self._uniqueness == 'throws' and has_duplicate:
+            raise Exception("Duplicated keys are not allowed in %s" % self.model)
+
+        if self._uniqueness == 'clean' and has_duplicate:
+            return list(map(lambda x: {key_type: x}, unique(key_ids)))
