@@ -146,6 +146,17 @@ def test_onetomany_should_deserialize_well():
     assert articles[1].headline == "My Article"
 
 
+def test_onetomany_should_resolve_well_duplicated_keys():
+    relationship = OneToMany(Article)
+    article = Article(10, headline="Test", reporter=Reporter(2))
+    article.save()
+
+    articles = relationship.deserialize([10, 10])
+    articles.resolve()
+    assert articles[0].headline == "Test"
+    assert articles[1].headline == "Test"
+
+
 def test_result_should_be_lazy():
     MockArticle = ObjectProxy(Article)
     MockArticle.get = MagicMock(return_value=Article.get(1))
