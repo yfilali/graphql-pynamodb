@@ -51,7 +51,7 @@ class RelationshipResultList(list):
             yield RelationshipResult(self._hash_key_name, key, self._model)
 
     def resolve(self):
-        models = dict((getattr(entity, self._hash_key_name), entity) for entity in self._model.batch_get(self._keys))
+        models = dict((getattr(entity, self._hash_key_name), entity) for entity in self._model.batch_get(list(set(self._keys))))
         return [models[key] for key in self._keys]
 
 
