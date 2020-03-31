@@ -59,7 +59,6 @@ def convert_column_to_float_or_id(type, attribute, registry=None):
     return Float(description=attribute.attr_name, required=not attribute.null)
 
 
-@convert_pynamo_attribute.register(attributes.LegacyBooleanAttribute)
 @convert_pynamo_attribute.register(attributes.BooleanAttribute)
 def convert_column_to_boolean(type, attribute, registry=None):
     return Boolean(description=attribute.attr_name, required=not attribute.null)

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='graphene-pynamodb',
-    version='2.1.0',
+    version='2.2.0',
 
     description='Graphene PynamoDB integration',
     long_description=open('README.rst').read(),
@@ -34,11 +34,11 @@ setup(
 
     install_requires=[
         'six>=1.10.0',
-        'promise==2.1',
+        'promise==2.3',
         'graphql-core < 3.0, >=2.0',
         'graphene < 3.0, >= 2.0',
-        'botocore < 1.11.0, >= 1.10.0',
-        'pynamodb >=2.0.0, <=4.0.0',
+        'botocore >= 1.12.54',
+        'pynamodb >= 4.0.0, <= 5.0.0',
         'singledispatch>=3.4.0.3',
         'wrapt>=1.10.8'
     ],
