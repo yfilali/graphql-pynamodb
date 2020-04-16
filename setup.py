@@ -44,7 +44,7 @@ setup(
     ],
     setup_requires=['pytest-runner'],
     tests_require=[
-        'pytest>=2.7.2',
+        'pytest>=3.6',
         'mock'
     ],
     test_suite="graphene_pynamodb.tests",
