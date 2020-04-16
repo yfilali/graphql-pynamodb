@@ -33,7 +33,7 @@ setup(
     packages=find_packages(exclude=['tests']),
 
     install_requires=[
-        'six>=1.10.0',
+        'six>=1.12.0',
         'promise==2.3',
         'graphql-core < 3.0, >=2.0',
         'graphene < 3.0, >= 2.0',
