@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='graphene-pynamodb',
-    version='2.2.0',
+    version='2.3.0',
 
     description='Graphene PynamoDB integration',
     long_description=open('README.rst').read(),
@@ -18,13 +18,10 @@ setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Libraries',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
 
