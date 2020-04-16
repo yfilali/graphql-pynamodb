@@ -1,7 +1,6 @@
 language: python
 sudo: false
 python:
-- 3.4
 - 3.5
 - 3.6
 - 3.7
@@ -37,6 +36,3 @@ env:
   - secure: SdqRiLn+4kel5tNJkVO2623ehVuD2AiUIfCNpZOYHq9VRQYuhoxHV4JFX4xxRq0F+MuUQpg68HrY2IHboLx2B3zai+HOqBKM3/EZmG5GFmFz8MhMaYnZOGxAU3I8ThceG7w08MgPrwGvreLSZs9QJyc5kAIlEZhMWVuEcPCLHGPsNmaAQz/XfmMqqRR/LHdO1lWyQOm2X3vkgGLEdiGPtLg+SAAXkZP7L7rkMFbV8c3716I3Hw8AfuUJMoWLQC8PD9k7d3jY/veZdWTIC5Ib745b+OBPZnuqakSmKP3kuRIT/dkKAwJMgiUHs5HYir5oDdTLaHjDjpw7f6xztKb28oOQiymoLqv0LjTnVhGHSFYysoy6PVlAVSm9H38RMY9XpuCErDBP559DTCT44ngTZaM3ao7SlaCpWHo5FJvX3nG0oEipy2hmyGuepVlLDZUXl6R3R+qq+GRb7BDM7xquSQLxwmu5Tk+F0k7HdelRuK1UGGXQFMCWbvCF6tEL4b2pZO/rijjx4ak/lNEUDZNw5rqcQFSBAraSRoxLATPtv/0dzanbxPkm4fbHtKQJMn1sBLWNBGLNXd5yk8+XAGxTfAQAxpEWNERvVHNIOCcBRw/o6LWJz9XyhogRrbKb0WVryVpHxgkteglNfQ4QU1KQAV40aL2s0aT2m6pou4eMlAE=
 matrix:
   fast_finish: true
-  include:
-  - python: '2.7'
-    env: TEST_TYPE=lint
