@@ -1,13 +1,13 @@
 import json
-import types
 from collections import OrderedDict
 
 from pynamodb import attributes
 from singledispatch import singledispatch
 
-from graphene import ID, Boolean, Dynamic, Field, Float, List, String
+from graphene import ID, Boolean, Dynamic, Field, Float, Int, List, String
 from graphene.types import ObjectType
 from graphene.types.json import JSONString
+from graphene.types.resolver import default_resolver
 from graphene_pynamodb import relationships
 from graphene_pynamodb.fields import PynamoConnectionField
 from graphene_pynamodb.registry import Registry
@@ -137,8 +137,38 @@ def convert_map_to_object_type(attribute, _, registry=None):
     )
 
 
+def list_resolver(
+    parent,
+    info,
+    index: int = None,
+    start_index: int = None,
+    end_index: int = None,
+    **kwargs,
+):
+    data = default_resolver(
+        attname=info.field_name, default_value=None, root=parent, info=info, **kwargs
+    )
+    if index:
+        return [data[index]]
+    if start_index and end_index:
+        return data[start_index:end_index]
+    if start_index:
+        return data[start_index:]
+    if end_index:
+        return data[:end_index]
+    return data
+
+
 @convert_pynamo_attribute.register(attributes.ListAttribute)
 def convert_list_to_list(type, attribute, registry=None):
+    kwargs = dict(
+        resolver=list_resolver,
+        index=Int(description="Return element at the position"),
+        start_index=Int(description="Start of the slice of the list"),
+        end_index=Int(
+            description="End of the slice of the list. Negative numbers can be given to access from the end."
+        ),
+    )
     if attribute.element_type:
         try:
             name = attribute.attr_name
@@ -150,6 +180,7 @@ def convert_list_to_list(type, attribute, registry=None):
             map_attribute_to_object_type(attribute.element_type, registry),
             description=name,
             required=required,
+            **kwargs,
         )
     else:
-        return List(String, description=attribute.attr_name)
+        return List(String, description=attribute.attr_name, **kwargs)
