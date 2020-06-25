@@ -1,20 +1,25 @@
 import json
+import types
+from collections import OrderedDict
 
-from graphene import Dynamic, Field, Float
-from graphene import ID, Boolean, List, String
-from graphene.types.json import JSONString
 from pynamodb import attributes
 from singledispatch import singledispatch
 
+from graphene import ID, Boolean, Dynamic, Field, Float, List, String
+from graphene.types import ObjectType
+from graphene.types.json import JSONString
 from graphene_pynamodb import relationships
 from graphene_pynamodb.fields import PynamoConnectionField
-from graphene_pynamodb.relationships import OneToOne, OneToMany
+from graphene_pynamodb.registry import Registry
+from graphene_pynamodb.relationships import OneToMany, OneToOne
 
 
 @singledispatch
 def convert_pynamo_attribute(type, attribute, registry=None):
     raise Exception(
-        "Don't know how to convert the PynamoDB attribute %s (%s)" % (attribute, attribute.__class__))
+        "Don't know how to convert the PynamoDB attribute %s (%s)"
+        % (attribute, attribute.__class__)
+    )
 
 
 @convert_pynamo_attribute.register(attributes.BinaryAttribute)
@@ -23,14 +28,18 @@ def convert_column_to_string(type, attribute, registry=None):
     if attribute.is_hash_key:
         return ID(description=attribute.attr_name, required=not attribute.null)
 
-    return String(description=getattr(attribute, 'attr_name'),
-                  required=not (getattr(attribute, 'null', True)))
+    return String(
+        description=getattr(attribute, "attr_name"),
+        required=not (getattr(attribute, "null", True)),
+    )
 
 
 @convert_pynamo_attribute.register(attributes.UTCDateTimeAttribute)
 def convert_date_to_string(type, attribute, registry=None):
-    return String(description=getattr(attribute, 'attr_name'),
-                  required=not (getattr(attribute, 'null', True)))
+    return String(
+        description=getattr(attribute, "attr_name"),
+        required=not (getattr(attribute, "null", True)),
+    )
 
 
 @convert_pynamo_attribute.register(relationships.Relationship)
@@ -77,7 +86,7 @@ def convert_json_to_string(type, attribute, registry=None):
 
 
 class MapToJSONString(JSONString):
-    '''JSON String Converter for MapAttribute'''
+    """JSON String Converter for MapAttribute"""
 
     @staticmethod
     def serialize(dt):
@@ -98,14 +107,34 @@ class ListOfMapToObject(JSONString):
             return dt
 
 
+def map_attribute_to_object_type(attribute, registry: Registry):
+    if not hasattr(registry, "map_attr_types"):
+        registry.map_attr_types = {}
+    if attribute in registry.map_attr_types:
+        return registry.map_attr_types[attribute]
+
+    fields = OrderedDict()
+    for name, attr in attribute.get_attributes().items():
+        fields[name] = convert_pynamo_attribute(attr, attr, registry)
+
+    map_attribute_type = type(
+        f"MapAttribute_{attribute.__name__}", (ObjectType,), fields,
+    )
+
+    registry.map_attr_types[attribute] = map_attribute_type
+    return map_attribute_type
+
+
 @convert_pynamo_attribute.register(attributes.MapAttribute)
-def convert_map_to_json(type, attribute, registry=None):
+def convert_map_to_object_type(attribute, _, registry=None):
     try:
         name = attribute.attr_name
     except (KeyError, AttributeError):
         name = "MapAttribute"
-    required = not attribute.null if hasattr(attribute, 'null') else False
-    return MapToJSONString(description=name, required=required)
+    required = not attribute.null if hasattr(attribute, "null") else False
+    return map_attribute_to_object_type(attribute, registry)(
+        description=name, required=required
+    )
 
 
 @convert_pynamo_attribute.register(attributes.ListAttribute)
@@ -116,7 +145,11 @@ def convert_list_to_list(type, attribute, registry=None):
         except KeyError:
             name = "MapAttribute"
 
-        required = not attribute.null if hasattr(attribute, 'null') else False
-        return ListOfMapToObject(description=name, required=required)
+        required = not attribute.null if hasattr(attribute, "null") else False
+        return List(
+            map_attribute_to_object_type(attribute.element_type, registry),
+            description=name,
+            required=required,
+        )
     else:
         return List(String, description=attribute.attr_name)
