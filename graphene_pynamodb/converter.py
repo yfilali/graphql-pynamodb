@@ -148,13 +148,13 @@ def list_resolver(
     data = default_resolver(
         attname=info.field_name, default_value=None, root=parent, info=info, **kwargs
     )
-    if index:
+    if index is not None:
         return [data[index]]
-    if start_index and end_index:
+    if (start_index is not None) and (end_index is not None):
         return data[start_index:end_index]
-    if start_index:
+    if start_index is not None:
         return data[start_index:]
-    if end_index:
+    if end_index is not None:
         return data[:end_index]
     return data
 
