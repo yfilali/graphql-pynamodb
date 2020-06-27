@@ -2,13 +2,11 @@ from __future__ import absolute_import
 
 from functools import partial
 
-from graphene import Int
-from graphene import relay
-from graphene.relay.connection import PageInfo
-from graphql_relay import from_global_id
-from graphql_relay import to_global_id
+from graphql_relay import from_global_id, to_global_id
 from graphql_relay.connection.connectiontypes import Edge
 
+from graphene import Int, relay
+from graphene.relay.connection import PageInfo
 from graphene_pynamodb.relationships import RelationshipResultList
 from graphene_pynamodb.utils import get_key_name
 
@@ -18,9 +16,7 @@ class PynamoConnectionField(relay.ConnectionField):
 
     def __init__(self, type, *args, **kwargs):
         super(PynamoConnectionField, self).__init__(
-            type._meta.connection,
-            *args,
-            **kwargs
+            type._meta.connection, *args, **kwargs
         )
 
     @property
@@ -36,10 +32,14 @@ class PynamoConnectionField(relay.ConnectionField):
     def connection_resolver(cls, resolver, connection, model, root, info, **args):
         iterable = resolver(root, info, **args)
 
-        first = args.get('first')
-        last = args.get('last')
-        (_, after) = from_global_id(args.get('after')) if args.get('after') else (None, None)
-        (_, before) = from_global_id(args.get('before')) if args.get('before') else (None, None)
+        first = args.get("first")
+        last = args.get("last")
+        (_, after) = (
+            from_global_id(args.get("after")) if args.get("after") else (None, None)
+        )
+        (_, before) = (
+            from_global_id(args.get("before")) if args.get("before") else (None, None)
+        )
         has_previous_page = bool(after)
         page_size = first if first else last if last else None
 
@@ -49,15 +49,28 @@ class PynamoConnectionField(relay.ConnectionField):
             iterable = query()
             if first or last or after or before:
                 raise NotImplementedError(
-                    "DynamoDB scan operations have no predictable sort. Arguments first, last, after " +
-                    "and before will have unpredictable results")
+                    "DynamoDB scan operations have no predictable sort. Arguments first, last, after "
+                    + "and before will have unpredictable results"
+                )
 
-        iterable = iterable if isinstance(iterable, list) else list(iterable) if iterable else []
+        iterable = (
+            iterable
+            if isinstance(iterable, list)
+            else list(iterable)
+            if iterable
+            else []
+        )
         if last:
             iterable = iterable[-last:]
 
-        (has_next, edges) = cls.get_edges_from_iterable(iterable, model, info, edge_type=connection.Edge, after=after,
-                                                        page_size=page_size)
+        (has_next, edges) = cls.get_edges_from_iterable(
+            iterable,
+            model,
+            info,
+            edge_type=connection.Edge,
+            after=after,
+            page_size=page_size,
+        )
 
         key_name = get_key_name(model)
         try:
@@ -69,32 +82,41 @@ class PynamoConnectionField(relay.ConnectionField):
 
         optional_args = {}
         total_count = len(iterable)
-        if 'total_count' in connection._meta.fields:
+        if "total_count" in connection._meta.fields:
             optional_args["total_count"] = total_count
 
         # Construct the connection
         return connection(
             edges=edges,
             page_info=PageInfo(
-                start_cursor=start_cursor if start_cursor else '',
-                end_cursor=end_cursor if end_cursor else '',
+                start_cursor=start_cursor if start_cursor else "",
+                end_cursor=end_cursor if end_cursor else "",
                 has_previous_page=has_previous_page,
-                has_next_page=has_next
+                has_next_page=has_next,
             ),
-            **optional_args
+            **optional_args,
         )
 
     def get_resolver(self, parent_resolver):
         return partial(self.connection_resolver, parent_resolver, self.type, self.model)
 
     @classmethod
-    def get_edges_from_iterable(cls, iterable, model, info, edge_type=Edge, after=None, page_size=None):
+    def get_edges_from_iterable(
+        cls, iterable, model, info, edge_type=Edge, after=None, page_size=None
+    ):
         has_next = False
 
         key_name = get_key_name(model)
         after_index = 0
         if after:
-            after_index = next((i for i, item in enumerate(iterable) if str(getattr(item, key_name)) == after), None)
+            after_index = next(
+                (
+                    i
+                    for i, item in enumerate(iterable)
+                    if str(getattr(item, key_name)) == after
+                ),
+                None,
+            )
             if after_index is None:
                 return None
             else:
@@ -102,7 +124,7 @@ class PynamoConnectionField(relay.ConnectionField):
 
         if page_size:
             has_next = len(iterable) - after_index > page_size
-            iterable = iterable[after_index:after_index + page_size]
+            iterable = iterable[after_index : after_index + page_size]
         else:
             iterable = iterable[after_index:]
 
@@ -110,7 +132,12 @@ class PynamoConnectionField(relay.ConnectionField):
         if isinstance(iterable, RelationshipResultList):
             iterable = iterable.resolve()
 
-        edges = [edge_type(node=entity, cursor=to_global_id(model.__name__, getattr(entity, key_name)))
-                 for entity in iterable]
+        edges = [
+            edge_type(
+                node=entity,
+                cursor=to_global_id(model.__name__, getattr(entity, key_name)),
+            )
+            for entity in iterable
+        ]
 
         return [has_next, edges]
