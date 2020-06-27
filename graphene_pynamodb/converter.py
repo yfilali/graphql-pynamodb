@@ -1,6 +1,7 @@
 import inspect
 import json
 from collections import OrderedDict
+from functools import partial
 
 from pynamodb import attributes
 from singledispatch import singledispatch
@@ -138,44 +139,54 @@ def convert_map_to_object_type(attribute, _, registry=None):
     )
 
 
-def list_resolver(
-    parent,
-    info,
-    index: int = None,
-    start_index: int = None,
-    end_index: int = None,
-    **kwargs,
-):
-    data = default_resolver(
-        attname=info.field_name, default_value=None, root=parent, info=info, **kwargs
-    )
-    if index is not None:
-        return [data[index]]
-    if (start_index is not None) and (end_index is not None):
-        return data[start_index:end_index]
-    if start_index is not None:
-        return data[start_index:]
-    if end_index is not None:
-        return data[:end_index]
-    return data
+def list_resolver(attname, default_value):
+    def _resolver(
+        parent,
+        info,
+        index: int = None,
+        start_index: int = None,
+        end_index: int = None,
+        **kwargs,
+    ):
+
+        data = default_resolver(
+            attname=attname,
+            default_value=default_value,
+            root=parent,
+            info=info,
+            **kwargs,
+        )
+        if index is not None:
+            return [data[index]]
+        if (start_index is not None) and (end_index is not None):
+            return data[start_index:end_index]
+        if start_index is not None:
+            return data[start_index:]
+        if end_index is not None:
+            return data[:end_index]
+        return data
+
+    return _resolver
 
 
 @convert_pynamo_attribute.register(attributes.ListAttribute)
 def convert_list_to_list(type, attribute, registry=None):
+    try:
+        name = attribute.attr_name
+        default = attribute.default
+    except KeyError:
+        name = attribute.element_type.__name__
+        default = None
     kwargs = dict(
-        resolver=list_resolver,
         index=Int(description="Return element at the position"),
         start_index=Int(description="Start of the slice of the list"),
         end_index=Int(
             description="End of the slice of the list. Negative numbers can be given to access from the end."
         ),
+        resolver=list_resolver(name, default),
     )
 
     if attribute.element_type and inspect.isclass(attribute.element_type):
-        try:
-            name = attribute.attr_name
-        except KeyError:
-            name = attribute.element_type.__name__
 
         required = not attribute.null if hasattr(attribute, "null") else False
 
@@ -188,6 +199,6 @@ def convert_list_to_list(type, attribute, registry=None):
         else:
             cls = String
 
-        return List(cls, description=name, required=required, **kwargs,)
+        return List(cls, description=name, required=required, **kwargs)
     else:
-        return List(String, description=attribute.attr_name, **kwargs)
+        return List(String, description=name, **kwargs)
