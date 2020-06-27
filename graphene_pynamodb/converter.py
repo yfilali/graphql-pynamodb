@@ -1,3 +1,4 @@
+import inspect
 import json
 from collections import OrderedDict
 
@@ -169,18 +170,24 @@ def convert_list_to_list(type, attribute, registry=None):
             description="End of the slice of the list. Negative numbers can be given to access from the end."
         ),
     )
-    if attribute.element_type:
+
+    if attribute.element_type and inspect.isclass(attribute.element_type):
         try:
             name = attribute.attr_name
         except KeyError:
-            name = "MapAttribute"
+            name = attribute.element_type.__name__
 
         required = not attribute.null if hasattr(attribute, "null") else False
-        return List(
-            map_attribute_to_object_type(attribute.element_type, registry),
-            description=name,
-            required=required,
-            **kwargs,
-        )
+
+        if issubclass(attribute.element_type, attributes.MapAttribute):
+            cls = map_attribute_to_object_type(attribute.element_type, registry)
+        elif issubclass(attribute.element_type, attributes.NumberAttribute):
+            cls = Int
+        elif issubclass(attribute.element_type, attributes.BooleanAttribute):
+            cls = Boolean
+        else:
+            cls = String
+
+        return List(cls, description=name, required=required, **kwargs,)
     else:
         return List(String, description=attribute.attr_name, **kwargs)
