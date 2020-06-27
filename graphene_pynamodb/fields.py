@@ -2,13 +2,12 @@ from __future__ import absolute_import
 
 from functools import partial
 
-from graphql_relay import from_global_id, to_global_id
 from graphql_relay.connection.connectiontypes import Edge
 
 from graphene import Int, relay
 from graphene.relay.connection import PageInfo
 from graphene_pynamodb.relationships import RelationshipResultList
-from graphene_pynamodb.utils import get_key_name
+from graphene_pynamodb.utils import from_cursor, get_key_name, to_cursor
 
 
 class PynamoConnectionField(relay.ConnectionField):
@@ -35,10 +34,10 @@ class PynamoConnectionField(relay.ConnectionField):
         first = args.get("first")
         last = args.get("last")
         (_, after) = (
-            from_global_id(args.get("after")) if args.get("after") else (None, None)
+            from_cursor(args.get("after")) if args.get("after") else (None, None)
         )
         (_, before) = (
-            from_global_id(args.get("before")) if args.get("before") else (None, None)
+            from_cursor(args.get("before")) if args.get("before") else (None, None)
         )
         has_previous_page = bool(after)
         page_size = first if first else last if last else None
@@ -46,12 +45,18 @@ class PynamoConnectionField(relay.ConnectionField):
         # get a full scan query since we have no resolved iterable from relationship or resolver function
         if not iterable and not root:
             query = cls.get_query(model, info, **args)
-            iterable = query()
-            if first or last or after or before:
-                raise NotImplementedError(
-                    "DynamoDB scan operations have no predictable sort. Arguments first, last, after "
-                    + "and before will have unpredictable results"
-                )
+
+            query_params = dict(limit=page_size or 20, consistent_read=True)
+            if after:
+                query_params["last_evaluated_key"] = after
+
+            result_iterator = query(**query_params)
+            iterable = list(result_iterator)
+            # if first or last or after or before:
+            #     raise NotImplementedError(
+            #         "DynamoDB scan operations have no predictable sort. Arguments first, last, after "
+            #         + "and before will have unpredictable results"
+            #     )
 
         iterable = (
             iterable
@@ -68,14 +73,13 @@ class PynamoConnectionField(relay.ConnectionField):
             model,
             info,
             edge_type=connection.Edge,
-            after=after,
+            # after=after,
             page_size=page_size,
         )
 
-        key_name = get_key_name(model)
         try:
-            start_cursor = getattr(edges[0].node, key_name)
-            end_cursor = getattr(edges[-1].node, key_name)
+            start_cursor = to_cursor(iterable[0])
+            end_cursor = to_cursor(iterable[-1])
         except IndexError:
             start_cursor = None
             end_cursor = None
@@ -133,11 +137,7 @@ class PynamoConnectionField(relay.ConnectionField):
             iterable = iterable.resolve()
 
         edges = [
-            edge_type(
-                node=entity,
-                cursor=to_global_id(model.__name__, getattr(entity, key_name)),
-            )
-            for entity in iterable
+            edge_type(node=entity, cursor=to_cursor(entity)) for entity in iterable
         ]
 
         return [has_next, edges]
