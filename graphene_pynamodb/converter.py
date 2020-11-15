@@ -120,7 +120,9 @@ def map_attribute_to_object_type(attribute, registry: Registry):
         fields[name] = convert_pynamo_attribute(attr, attr, registry)
 
     map_attribute_type = type(
-        f"MapAttribute_{attribute.__name__}", (ObjectType,), fields,
+        f"MapAttribute_{attribute.__name__}",
+        (ObjectType,),
+        fields,
     )
 
     registry.map_attr_types[attribute] = map_attribute_type
@@ -193,7 +195,7 @@ def convert_list_to_list(type, attribute, registry=None):
         if issubclass(attribute.element_type, attributes.MapAttribute):
             cls = map_attribute_to_object_type(attribute.element_type, registry)
         elif issubclass(attribute.element_type, attributes.NumberAttribute):
-            cls = Int
+            cls = Float
         elif issubclass(attribute.element_type, attributes.BooleanAttribute):
             cls = Boolean
         else:
