@@ -31,3 +31,8 @@ def connection_for_type(_type):
             return self.total_count if hasattr(self, "total_count") else len(self.edges)
 
     return Connection
+
+
+def unique(sequence):
+    seen = set()
+    return [x for x in sequence if not (x in seen or seen.add(x))]

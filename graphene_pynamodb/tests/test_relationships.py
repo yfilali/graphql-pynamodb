@@ -133,6 +133,28 @@ def test_onetomany_should_serialize_well():
     assert relationship.serialize([fixtures["article1"], fixtures["article2"]]) == [{'N': '1'}, {'N': '2'}]
 
 
+def test_onetomany_should_serialize_well_duplicated_allowed():
+    fixtures = setup_fixtures()
+    relationship = OneToMany(Article)
+    assert relationship.serialize([fixtures["article1"], fixtures["article1"]]) == [{'N': '1'}, {'N': '1'}]
+
+    relationship = OneToMany(Article, uniqueness=False)
+    assert relationship.serialize([fixtures["article1"], fixtures["article1"]]) == [{'N': '1'}, {'N': '1'}]
+
+
+def test_onetomany_should_serialize_well_duplicated_are_cleaned():
+    fixtures = setup_fixtures()
+    relationship = OneToMany(Article, uniqueness='clean')
+    assert relationship.serialize([fixtures["article1"], fixtures["article1"]]) == [{'N': '1'}]
+
+
+def test_onetomany_should_serialize_well_duplicated_throws_error():
+    fixtures = setup_fixtures()
+    relationship = OneToMany(Article, uniqueness='throws')
+    with pytest.raises(Exception):
+        relationship.serialize([fixtures["article1"], fixtures["article1"]])
+
+
 def test_onetomany_should_deserialize_well():
     relationship = OneToMany(Article)
 
@@ -144,6 +166,17 @@ def test_onetomany_should_deserialize_well():
     # test db call
     assert articles[0].headline == "Hi!"
     assert articles[1].headline == "My Article"
+
+
+def test_onetomany_should_resolve_well_duplicated_keys():
+    relationship = OneToMany(Article)
+    article = Article(10, headline="Test", reporter=Reporter(2))
+    article.save()
+
+    articles = relationship.deserialize([10, 10])
+    articles.resolve()
+    assert articles[0].headline == "Test"
+    assert articles[1].headline == "Test"
 
 
 def test_result_should_be_lazy():
