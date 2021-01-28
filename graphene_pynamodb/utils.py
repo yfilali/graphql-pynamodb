@@ -12,8 +12,7 @@ def get_key_name(model):
     if model in MODEL_KEY_REGISTRY:
         return MODEL_KEY_REGISTRY[model]
 
-    for attr in vars(model):
-        attr = getattr(model, attr)
+    for attr in model.get_attributes().values():
         if isinstance(attr, Attribute) and attr.is_hash_key:
             MODEL_KEY_REGISTRY[model] = attr.attr_name
             return attr.attr_name
