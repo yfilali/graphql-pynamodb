@@ -35,7 +35,7 @@ setup(
         'graphql-core < 3.0, >=2.0',
         'graphene < 3.0, >= 2.0',
         'botocore >= 1.12.54',
-        'pynamodb >= 4.0.0, <= 5.0.0',
+        'pynamodb >= 4.0.0, < 5.0.0',
         'singledispatch>=3.4.0.3',
         'wrapt>=1.10.8'
     ],
