@@ -207,7 +207,7 @@ def get_list_field_converter(attribute, registry, mapping: dict = None):
 
         for elem_type, mapped in default_fields_mapping.items():
             if issubclass(attribute.element_type, elem_type):
-                cls = mapping.get(elem_type, default=mapped)
+                cls = mapping.get(elem_type, mapped)
 
         if cls is None:
             if issubclass(attribute.element_type, attributes.MapAttribute):
