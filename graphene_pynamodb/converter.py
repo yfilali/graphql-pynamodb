@@ -191,22 +191,35 @@ def get_list_field_kwargs(attribute):
     )
 
 
-@convert_pynamo_attribute.register(attributes.ListAttribute)
-def convert_list_to_list(type, attribute, registry=None):
+default_fields_mapping = {
+    attributes.NumberAttribute: Float,
+    attributes.BooleanAttribute: Boolean,
+}
+
+
+def get_list_field_converter(attribute, registry, mapping: dict = None):
+    mapping = mapping or {}
     kwargs, name = get_list_field_kwargs(attribute)
     if attribute.element_type and inspect.isclass(attribute.element_type):
 
         required = not attribute.null if hasattr(attribute, "null") else False
+        cls = None
 
-        if issubclass(attribute.element_type, attributes.MapAttribute):
-            cls = map_attribute_to_object_type(attribute.element_type, registry)
-        elif issubclass(attribute.element_type, attributes.NumberAttribute):
-            cls = Float
-        elif issubclass(attribute.element_type, attributes.BooleanAttribute):
-            cls = Boolean
-        else:
-            cls = String
+        for elem_type, mapped in default_fields_mapping.items():
+            if issubclass(attribute.element_type, elem_type):
+                cls = mapping.get(elem_type, default=mapped)
+
+        if cls is None:
+            if issubclass(attribute.element_type, attributes.MapAttribute):
+                cls = map_attribute_to_object_type(attribute.element_type, registry)
+            else:
+                cls = String
 
         return List(cls, description=name, required=required, **kwargs)
     else:
         return List(String, description=name, **kwargs)
+
+
+@convert_pynamo_attribute.register(attributes.ListAttribute)
+def convert_list_to_list(type, attribute, registry=None):
+    return get_list_field_converter(attribute, registry)
