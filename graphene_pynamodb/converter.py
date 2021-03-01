@@ -171,23 +171,29 @@ def list_resolver(attname, default_value):
     return _resolver
 
 
-@convert_pynamo_attribute.register(attributes.ListAttribute)
-def convert_list_to_list(type, attribute, registry=None):
+def get_list_field_kwargs(attribute):
     try:
         name = attribute.attr_name
         default = attribute.default
     except KeyError:
         name = attribute.element_type.__name__
         default = None
-    kwargs = dict(
-        index=Int(description="Return element at the position"),
-        start_index=Int(description="Start of the slice of the list"),
-        end_index=Int(
-            description="End of the slice of the list. Negative numbers can be given to access from the end."
+    return (
+        dict(
+            index=Int(description="Return element at the position"),
+            start_index=Int(description="Start of the slice of the list"),
+            end_index=Int(
+                description="End of the slice of the list. Negative numbers can be given to access from the end."
+            ),
+            resolver=list_resolver(name, default),
         ),
-        resolver=list_resolver(name, default),
+        name,
     )
 
+
+@convert_pynamo_attribute.register(attributes.ListAttribute)
+def convert_list_to_list(type, attribute, registry=None):
+    kwargs, name = get_list_field_kwargs(attribute)
     if attribute.element_type and inspect.isclass(attribute.element_type):
 
         required = not attribute.null if hasattr(attribute, "null") else False
