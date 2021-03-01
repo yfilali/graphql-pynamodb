@@ -18,13 +18,11 @@ def get_model_fields(model, excluding=None):
     if excluding is None:
         excluding = []
     attributes = dict()
-    for attr_name in vars(model):
+
+    for attr_name, attr in model.get_attributes().items():
         if attr_name in excluding:
             continue
-        attr = getattr(model, attr_name)
-        if isinstance(attr, Attribute):
-            attributes[attr_name] = attr
-
+        attributes[attr_name] = attr
     return OrderedDict(sorted(attributes.items(), key=lambda t: t[0]))
 
 
