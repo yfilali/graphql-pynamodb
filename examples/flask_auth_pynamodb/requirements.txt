@@ -1,5 +1,5 @@
 Flask==1.0.2
-Flask-Cors==3.0.2
+Flask-Cors==3.0.9
 Flask-GraphQL==1.4.0
 Flask-JWT==0.3.2
 graphene-pynamodb>=2.0.0
