@@ -1,0 +1,44 @@
+name: Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag_name_input:
+        description: "Release Tag Name <X.X.X>"
+        required: true
+  release:
+    types:
+      - published
+
+
+jobs:
+  build-n-publish:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+
+      - name: get version
+        id: get-version
+        run: |
+          if [[ "${{ github.event_name }}" != "release" ]]; then
+            echo "::set-output name=version::$RELEASE_TAG_NAME_INPUT"
+          else
+            version=$(hub release -L 1)
+            echo "::set-output name=version::$version"
+          fi
+        env:
+          RELEASE_TAG_NAME_INPUT: ${{ github.event.inputs.release_tag_name_input }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: get release assets
+        uses: Xotl/cool-github-releases@16c58a5863d6ba9944f63ca8bb78bb3249ce1d81
+        with:
+          mode: download
+          tag_name: ${{ steps.get-version.outputs.version }}
+          assets: graphene-pynamodb-${{ steps.get-version.outputs.version }}.tar.gz|./dist/graphene-pynamodb-${{ steps.get-version.outputs.version }}.tar.gz;graphene_pynamodb-${{ steps.get-version.outputs.version }}-py3-none-any.whl|./dist/graphene_pynamodb-${{ steps.get-version.outputs.version }}-py3-none-any.whl
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
